@@ -2,6 +2,7 @@ import { Router } from 'express';
 import orderController from './controllers/order.controller';
 import { validate } from '../../common/middlewares/validator';
 import { authMiddleware } from '../../common/middlewares/auth';
+import { requireAttendant } from '../../common/middlewares/authorization';
 import {
   createOrderValidation,
   updateOrderValidation,
@@ -13,18 +14,17 @@ const router = Router();
 // All order routes require authentication
 router.use(authMiddleware);
 
+// Only ATTENDANT/LAB_ADMIN/SUPER_ADMIN can create orders
+router.post('/', requireAttendant, validate(createOrderValidation), orderController.createOrder);
+
+// Read operations allowed for all authenticated users
 router.get('/stats', orderController.getOrderStats);
-
-router.post('/', validate(createOrderValidation), orderController.createOrder);
-
 router.get('/', validate(listOrdersValidation), orderController.listOrders);
-
 router.get('/:id', orderController.getOrderById);
 
-router.put('/:id', validate(updateOrderValidation), orderController.updateOrder);
-
-router.delete('/:id', orderController.deleteOrder);
-
-router.patch('/:id/advance', orderController.advanceOrderState);
+// Update/Delete/Advance operations only for ATTENDANT
+router.put('/:id', requireAttendant, validate(updateOrderValidation), orderController.updateOrder);
+router.delete('/:id', requireAttendant, orderController.deleteOrder);
+router.patch('/:id/advance', requireAttendant, orderController.advanceOrderState);
 
 export default router;

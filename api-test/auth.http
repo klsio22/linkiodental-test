@@ -4,54 +4,82 @@
 @apiUrl = {{baseUrl}}/api
 
 ###############################################################################
-### AUTHENTICATION TOKENS
+### USERS - REGISTRATION (Staff vs Clients)
 ###############################################################################
 
-### 1. Register New User
+### 1. Register ATTENDANT (Staff - Can Create Orders)
 POST {{apiUrl}}/users/register HTTP/1.1
 Content-Type: application/json
 
 {
-  "email": "customer1@example.com",
+  "email": "attendant@lab.com",
   "password": "senha123",
-  "name": "João Silva",
+  "name": "Maria Atendente",
+  "role": "ATTENDANT"
+}
+
+### 2. Register CUSTOMER (Client/Patient - Cannot Create Orders)
+POST {{apiUrl}}/users/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "customer@example.com",
+  "password": "senha123",
+  "name": "João Silva (Paciente)",
   "role": "CUSTOMER"
 }
 
-### 2. Register Lab Admin
+### 3. Register LAB_ADMIN
 POST {{apiUrl}}/users/register HTTP/1.1
 Content-Type: application/json
 
 {
-  "email": "admin@example.com",
+  "email": "admin@lab.com",
   "password": "admin123",
   "name": "Admin Lab",
   "role": "LAB_ADMIN"
 }
 
-### 3. Login User - Get Token
+###############################################################################
+### USERS - LOGIN
+###############################################################################
+
+### 4. Login as ATTENDANT
 POST {{apiUrl}}/users/login HTTP/1.1
 Content-Type: application/json
 
 {
-  "email": "customer1@example.com",
+  "email": "attendant@lab.com",
   "password": "senha123"
 }
 
-### 4. Login Admin - Get Token
+### 5. Login as CUSTOMER
 POST {{apiUrl}}/users/login HTTP/1.1
 Content-Type: application/json
 
 {
-  "email": "admin@example.com",
+  "email": "customer@example.com",
+  "password": "senha123"
+}
+
+### 6. Login as LAB_ADMIN
+POST {{apiUrl}}/users/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "admin@lab.com",
   "password": "admin123"
 }
 
-### 5. Get User Profile
-GET {{apiUrl}}/users/profile HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+###############################################################################
+### USERS - PROFILE
+###############################################################################
 
-### 6. Update User Profile
+### 7. Get User Profile
+GET {{apiUrl}}/users/profile HTTP/1.1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NWM0NTI3ODdhOTBmYjZjZDRhMjEzYyIsInJvbGUiOiJBVFRFTkRBTlQiLCJpYXQiOjE3Njc2NTQ4MzEsImV4cCI6MTc2ODI1OTYzMX0.xKd5qbOdRi0w9_lnlErIzfdKwiQGXH5FYpsEd-Afh_Y
+
+### 8. Update User Profile
 PUT {{apiUrl}}/users/profile HTTP/1.1
 Authorization: Bearer {token_from_login_response}
 Content-Type: application/json
@@ -59,6 +87,353 @@ Content-Type: application/json
 {
   "name": "João Silva Updated"
 }
+
+###############################################################################
+### ORDERS - CREATE (Only ATTENDANT/LAB_ADMIN/SUPER_ADMIN)
+###############################################################################
+
+### 9. Create Order - ATTENDANT Success
+POST {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {attendant_token}
+Content-Type: application/json
+
+{
+  "lab": "Lab Sorriso",
+  "patient": "João Silva",
+  "customer": "Dr. Maria Santos",
+  "services": [
+    {
+      "name": "Coroa de Porcelana",
+      "value": 800.00,
+      "status": "PENDING"
+    },
+    {
+      "name": "Implante Dentário",
+      "value": 1700.00,
+      "status": "PENDING"
+    }
+  ]
+}
+
+### 10. Create Order - CUSTOMER Error (403 Forbidden)
+POST {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {customer_token}
+Content-Type: application/json
+
+{
+  "lab": "Lab Sorriso",
+  "patient": "Ana Silva",
+  "customer": "Dr. Pedro Lima",
+  "services": [
+    {
+      "name": "Limpeza",
+      "value": 300.00
+    }
+  ]
+}
+
+### 11. Create Order - Multiple Services
+POST {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {attendant_token}
+Content-Type: application/json
+
+{
+  "lab": "Lab Perfecto",
+  "patient": "Ana Costa",
+  "customer": "Dr. Pedro Lima",
+  "services": [
+    {
+      "name": "Prótese Parcial",
+      "value": 1500.00
+    },
+    {
+      "name": "Aparelho Ortodôntico",
+      "value": 1200.00
+    },
+    {
+      "name": "Contenção",
+      "value": 500.00
+    }
+  ]
+}
+
+### 12. Create Order - Single Service
+POST {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {attendant_token}
+Content-Type: application/json
+
+{
+  "lab": "Lab Express",
+  "patient": "Carlos Mendes",
+  "customer": "Dra. Fernanda Costa",
+  "services": [
+    {
+      "name": "Limpeza Profunda",
+      "value": 300.00
+    }
+  ]
+}
+
+### 13. Create Order - Invalid (Missing Services)
+POST {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {attendant_token}
+Content-Type: application/json
+
+{
+  "lab": "Lab Test",
+  "patient": "Teste",
+  "customer": "Dr. Teste",
+  "services": []
+}
+
+### 14. Create Order - Invalid (Service Value <= 0)
+POST {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {attendant_token}
+Content-Type: application/json
+
+{
+  "lab": "Lab Test",
+  "patient": "Teste",
+  "customer": "Dr. Teste",
+  "services": [
+    {
+      "name": "Serviço Inválido",
+      "value": 0
+    }
+  ]
+}
+
+### 15. Create Order - No Authentication
+POST {{apiUrl}}/orders HTTP/1.1
+Content-Type: application/json
+
+{
+  "lab": "Lab Test",
+  "patient": "Teste",
+  "customer": "Dr. Teste",
+  "services": [
+    {
+      "name": "Serviço",
+      "value": 100.00
+    }
+  ]
+}
+
+###############################################################################
+### ORDERS - READ (All Authenticated Users Can View)
+###############################################################################
+
+### 16. List Orders - Attendant (Their Orders)
+GET {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {attendant_token}
+
+### 17. List Orders - Customer (Their Orders)
+GET {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {customer_token}
+
+### 18. List Orders - Paginated
+GET {{apiUrl}}/orders?page=1&limit=10 HTTP/1.1
+Authorization: Bearer {attendant_token}
+
+### 19. List Orders - Filter by State CREATED
+GET {{apiUrl}}/orders?state=CREATED HTTP/1.1
+Authorization: Bearer {attendant_token}
+
+### 20. List Orders - Filter by State ANALYSIS
+GET {{apiUrl}}/orders?state=ANALYSIS HTTP/1.1
+Authorization: Bearer {attendant_token}
+
+### 21. List Orders - Filter by Status ACTIVE
+GET {{apiUrl}}/orders?status=ACTIVE HTTP/1.1
+Authorization: Bearer {attendant_token}
+
+### 22. List Orders - Filter by Patient Name
+GET {{apiUrl}}/orders?patientName=João HTTP/1.1
+Authorization: Bearer {attendant_token}
+
+### 23. List Orders - Sort by CreatedAt Descending
+GET {{apiUrl}}/orders?sortBy=createdAt&sortOrder=desc HTTP/1.1
+Authorization: Bearer {attendant_token}
+
+### 24. Get Order by ID
+GET {{apiUrl}}/orders/{order_id} HTTP/1.1
+Authorization: Bearer {attendant_token}
+
+### 25. Get User Statistics
+GET {{apiUrl}}/orders/stats HTTP/1.1
+Authorization: Bearer {attendant_token}
+
+###############################################################################
+### ORDERS - UPDATE (Only ATTENDANT/LAB_ADMIN Can Modify)
+###############################################################################
+
+### 26. Update Order - Change Customer (ATTENDANT)
+PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
+Authorization: Bearer {attendant_token}
+Content-Type: application/json
+
+{
+  "customer": "Dr. João Nova Silva"
+}
+
+### 27. Update Order - Update Services (ATTENDANT)
+PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
+Authorization: Bearer {attendant_token}
+Content-Type: application/json
+
+{
+  "services": [
+    {
+      "name": "Coroa de Zircônia",
+      "value": 950.00,
+      "status": "DONE"
+    }
+  ]
+}
+
+### 28. Update Order - Change Status (ATTENDANT)
+PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
+Authorization: Bearer {attendant_token}
+Content-Type: application/json
+
+{
+  "status": "DELETED"
+}
+
+### 29. Update Order - CUSTOMER Error (403)
+PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
+Authorization: Bearer {customer_token}
+Content-Type: application/json
+
+{
+  "customer": "Dr. Novo"
+}
+
+###############################################################################
+### ORDERS - ADVANCE STATE (Only ATTENDANT/LAB_ADMIN)
+###############################################################################
+
+### 30. Advance Order State - ATTENDANT (CREATED -> ANALYSIS)
+PATCH {{apiUrl}}/orders/{order_id}/advance HTTP/1.1
+Authorization: Bearer {attendant_token}
+
+### 31. Advance Order State - CUSTOMER Error (403)
+PATCH {{apiUrl}}/orders/{order_id}/advance HTTP/1.1
+Authorization: Bearer {customer_token}
+
+###############################################################################
+### ORDERS - DELETE (Only ATTENDANT/LAB_ADMIN)
+###############################################################################
+
+### 32. Delete Order - ATTENDANT
+DELETE {{apiUrl}}/orders/{order_id} HTTP/1.1
+Authorization: Bearer {attendant_token}
+
+### 33. Delete Order - CUSTOMER Error (403)
+DELETE {{apiUrl}}/orders/{order_id} HTTP/1.1
+Authorization: Bearer {customer_token}
+
+###############################################################################
+### HEALTH CHECK
+###############################################################################
+
+### 34. Health Check
+GET {{apiUrl}}/health HTTP/1.1
+
+### 35. Root Endpoint
+GET {{baseUrl}}/ HTTP/1.1
+
+###############################################################################
+### COMPLETE WORKFLOW EXAMPLE
+###############################################################################
+
+### Step 1: Register Attendant
+POST {{apiUrl}}/users/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "workflow@lab.com",
+  "password": "workflow123",
+  "name": "Workflow Attendant",
+  "role": "ATTENDANT"
+}
+
+### Step 2: Login as Attendant (Get Token)
+POST {{apiUrl}}/users/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "workflow@lab.com",
+  "password": "workflow123"
+}
+
+### Step 3: Create Order (Use Token from Step 2)
+POST {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {token_from_step2}
+Content-Type: application/json
+
+{
+  "lab": "Lab Workflow",
+  "patient": "Paciente Workflow",
+  "customer": "Dr. Workflow",
+  "services": [
+    {
+      "name": "Serviço Workflow",
+      "value": 500.00
+    }
+  ]
+}
+
+### Step 4: List Orders (Use order_id from Step 3)
+GET {{apiUrl}}/orders?state=CREATED HTTP/1.1
+Authorization: Bearer {token_from_step2}
+
+### Step 5: Advance Order State
+PATCH {{apiUrl}}/orders/{order_id_from_step3}/advance HTTP/1.1
+Authorization: Bearer {token_from_step2}
+
+### Step 6: View Statistics
+GET {{apiUrl}}/orders/stats HTTP/1.1
+Authorization: Bearer {token_from_step2}
+
+###############################################################################
+### IMPORTANT NOTES FOR TESTING
+###############################################################################
+
+# ROLES AND PERMISSIONS:
+# 1. CUSTOMER = Cliente/Paciente
+#    - Pode fazer login
+#    - Pode ver seus perfis
+#    - NÃO pode criar pedidos ❌
+#    - NÃO pode modificar pedidos ❌
+#    - Pode visualizar pedidos em read-only ✅
+
+# 2. ATTENDANT = Atendente/Funcionário (STAFF)
+#    - Pode fazer login
+#    - Pode criar pedidos ✅
+#    - Pode modificar pedidos (PUT, DELETE) ✅
+#    - Pode avançar estados ✅
+#    - Pode ver estatísticas ✅
+
+# 3. LAB_ADMIN = Administrador do Laboratório
+#    - Acesso total igual a ATTENDANT
+#    - Pode gerenciar todo o laboratório
+
+# 4. SUPER_ADMIN = Super Administrador
+#    - Acesso total do sistema
+
+# FIELDS NO PEDIDO:
+# - state: CREATED → ANALYSIS → COMPLETED
+# - status: ACTIVE | DELETED
+
+# COMO TESTAR:
+# 1. Registre um usuário ATTENDANT
+# 2. Faça login para obter o token
+# 3. Substitua {attendant_token} pelo token real
+# 4. Use o endpoint de criar pedido
+# 5. Registre um CUSTOMER
+# 6. Tente criar pedido com token CUSTOMER - deve falhar com 403!
+
 
 ###############################################################################
 ### ORDERS - CREATE

@@ -1,7 +1,8 @@
 export enum UserRole {
-  CUSTOMER = 'CUSTOMER',
-  LAB_ADMIN = 'LAB_ADMIN',
-  SUPER_ADMIN = 'SUPER_ADMIN',
+  CUSTOMER = 'CUSTOMER',           // Cliente/Paciente - não pode criar pedidos
+  ATTENDANT = 'ATTENDANT',         // Atendente/Funcionário - pode criar pedidos
+  LAB_ADMIN = 'LAB_ADMIN',         // Admin do laboratório
+  SUPER_ADMIN = 'SUPER_ADMIN',     // Super admin
 }
 
 export interface IUser {

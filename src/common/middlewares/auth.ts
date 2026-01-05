@@ -6,6 +6,7 @@ import { AppError } from './errorHandler';
 export interface AuthRequest extends Request {
   user?: {
     id: string;
+    role?: string;
   };
 }
 
@@ -18,7 +19,10 @@ export const authMiddleware = (req: AuthRequest, _res: Response, next: NextFunct
 
   try {
     const decoded: any = jwt.verify(token, config.jwtSecret);
-    (req as any).user = { id: decoded.id };
+    (req as any).user = {
+      id: decoded.id,
+      role: decoded.role,
+    };
     next();
   } catch (error) {
     next(new AppError('Invalid or expired token', 401));

@@ -71,55 +71,110 @@ O sistema utiliza **JWT (JSON Web Tokens)** para autenticação. Todos os endpoi
 | GET | `/api/users/profile` | Ver perfil | ✅ |
 | PUT | `/api/users/profile` | Atualizar perfil | ✅ |
 
-### 1️⃣ Registrar Usuário
+### User Roles (Papéis de Usuário)
+
+| Role | Descrição | Pode Criar Pedidos? | Pode Modificar? |
+|------|-----------|-------------------|-----------------|
+| **CUSTOMER** | Cliente/Paciente | ❌ Não | ❌ Não |
+| **ATTENDANT** | Atendente/Funcionário (STAFF) | ✅ Sim | ✅ Sim |
+| **LAB_ADMIN** | Admin do Laboratório | ✅ Sim | ✅ Sim |
+| **SUPER_ADMIN** | Super Admin | ✅ Sim | ✅ Sim |
+
+### ⚠️ Importante
+
+- **CUSTOMER** é quem representa o **paciente** nos pedidos
+- **CUSTOMER** NÃO pode criar pedidos - apenas visualizar ❌
+- **ATTENDANT** (funcionário) cria os pedidos informando o cliente como **"patient"**
+- Cada usuário vê APENAS seus próprios pedidos (isolamento de dados)
+
+### 1️⃣ Registrar Atendente (STAFF)
 
 ```bash
 curl -X POST http://localhost:3000/api/users/register \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "usuario@example.com",
+    "email": "atendente@lab.com",
+    "password": "senha123",
+    "name": "Maria Atendente",
+    "role": "ATTENDANT"
+  }'
+```
+
+### 2️⃣ Registrar Cliente/Paciente
+
+```bash
+curl -X POST http://localhost:3000/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "cliente@example.com",
     "password": "senha123",
     "name": "João Silva",
     "role": "CUSTOMER"
   }'
 ```
 
-**Resposta:**
-```json
+### 3️⃣ Login e Obter Token
+
+```bash
+# Atendente faz login
+curl -X POST http://localhost:3000/api/users/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "atendente@lab.com",
+    "password": "senha123"
+  }'
+
+# Resposta contém token JWT
 {
   "id": "507f1f77bcf86cd799439011",
-  "email": "usuario@example.com",
-  "name": "João Silva",
-  "role": "CUSTOMER",
+  "email": "atendente@lab.com",
+  "name": "Maria Atendente",
+  "role": "ATTENDANT",
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 
-### 2️⃣ Fazer Login
+### 4️⃣ Criar Pedido (ATTENDANT Apenas)
 
 ```bash
-curl -X POST http://localhost:3000/api/users/login \
+curl -X POST http://localhost:3000/api/orders \
+  -H "Authorization: Bearer {ATTENDANT_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "usuario@example.com",
-    "password": "senha123"
+    "lab": "Lab Sorriso",
+    "patient": "João Silva",
+    "customer": "Dr. Maria Santos",
+    "services": [
+      {"name": "Coroa", "value": 800.00},
+      {"name": "Implante", "value": 1700.00}
+    ]
   }'
 ```
 
-### 3️⃣ Usar Token em Requisições
-
-Adicione o header `Authorization` em todas as requisições de pedidos:
+### 5️⃣ Tentar Criar Pedido como CUSTOMER (Erro 403)
 
 ```bash
-curl -X GET http://localhost:3000/api/orders \
-  -H "Authorization: Bearer {seu_token_jwt}"
+curl -X POST http://localhost:3000/api/orders \
+  -H "Authorization: Bearer {CUSTOMER_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{...}'
+
+# Resposta:
+# 403 Forbidden
+# "Only staff members (ATTENDANT) can create orders. Clients cannot create orders."
 ```
 
-### Roles Disponíveis
+### 6️⃣ Listar Pedidos do Usuário
 
-- **CUSTOMER**: Usuário padrão (pode gerenciar seus pedidos)
-- **LAB_ADMIN**: Administrador do laboratório
-- **SUPER_ADMIN**: Super administrador
+```bash
+# Atendente vê seus pedidos
+curl -X GET http://localhost:3000/api/orders \
+  -H "Authorization: Bearer {ATTENDANT_TOKEN}"
+
+# Cliente vê seus pedidos (se tiver)
+curl -X GET http://localhost:3000/api/orders \
+  -H "Authorization: Bearer {CUSTOMER_TOKEN}"
+```
 
 ## 🧪 Testar a API
 

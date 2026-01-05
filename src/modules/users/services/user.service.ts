@@ -5,8 +5,8 @@ import jwt from 'jsonwebtoken';
 import { config } from '../../../common/config/env';
 
 export class UserService {
-  private generateToken(userId: string): string {
-    return jwt.sign({ id: userId }, config.jwtSecret, {
+  private generateToken(userId: string, role: string): string {
+    return jwt.sign({ id: userId, role }, config.jwtSecret, {
       expiresIn: config.jwtExpiresIn,
     } as any);
   }
@@ -25,7 +25,7 @@ export class UserService {
     });
 
     const savedUser = await user.save();
-    const token = this.generateToken(savedUser._id.toString());
+    const token = this.generateToken(savedUser._id.toString(), savedUser.role);
 
     return {
       id: savedUser._id.toString(),
@@ -51,7 +51,7 @@ export class UserService {
       throw new AppError('User account is inactive', 403);
     }
 
-    const token = this.generateToken(user._id.toString());
+    const token = this.generateToken(user._id.toString(), user.role);
 
     return {
       id: user._id.toString(),

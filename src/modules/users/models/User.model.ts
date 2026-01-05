@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import bcryptjs from 'bcryptjs';
 import { IUser, UserRole } from '../types/user.types';
 
 export interface IUserDocument extends IUser, Document {
@@ -13,7 +14,7 @@ const userSchema = new Schema<IUserDocument>(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email'],
+      match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email'],
     },
     password: {
       type: String,
@@ -53,8 +54,7 @@ const userSchema = new Schema<IUserDocument>(
 userSchema.index({ email: 1 });
 
 userSchema.methods.comparePassword = async function (password: string): Promise<boolean> {
-  const bcrypt = require('bcryptjs');
-  return await bcrypt.compare(password, this.password);
+  return await bcryptjs.compare(password, this.password);
 };
 
 userSchema.pre('save', async function (next) {
@@ -62,9 +62,8 @@ userSchema.pre('save', async function (next) {
     return next();
   }
 
-  const bcrypt = require('bcryptjs');
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  const salt = await bcryptjs.genSalt(10);
+  this.password = await bcryptjs.hash(this.password, salt);
   next();
 });
 
