@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { OrderService } from '../services/order.service';
 import { Order } from '../models/Order.model';
-import { OrderState, OrderStatus } from '../types/order.types';
+import { OrderState, OrderStatus, ServiceStatus } from '../types/order.types';
 
 vi.mock('../models/Order.model');
 
@@ -34,7 +34,7 @@ describe('OrderService', () => {
         patient: 'João Silva',
         customer: 'Dr. Maria Santos',
         services: [
-          { name: 'Coroa', value: 800, status: 'PENDING' },
+          { name: 'Coroa', value: 800, status: ServiceStatus.PENDING },
         ],
       };
 
@@ -55,61 +55,22 @@ describe('OrderService', () => {
       expect(mockOrder.save).toHaveBeenCalled();
     });
 
-    it('não deve criar pedido duplicado', async () => {
+    it('deve permitir criar múltiplos pedidos com mesmos detalhes', async () => {
       const orderData = {
         lab: 'Lab Sorriso',
         patient: 'João Silva',
         customer: 'Dr. Maria Santos',
         services: [
-          { name: 'Coroa', value: 800, status: 'PENDING' },
+          { name: 'Coroa', value: 800, status: ServiceStatus.PENDING },
         ],
       };
-
-      const existingOrder = {
-        userId: mockUserId,
-        lab: 'Lab Sorriso',
-        patient: 'João Silva',
-        customer: 'Dr. Maria Santos',
-        services: [
-          { name: 'Coroa', value: 800, status: 'PENDING' },
-        ],
-        status: 'ACTIVE',
-      };
-
-      vi.mocked(Order.findOne).mockResolvedValue(existingOrder as any);
-
-      await expect(orderService.createOrder(mockUserId, orderData)).rejects.toThrow(
-        'Duplicate order: An active order with the same details already exists'
-      );
-    });
-
-    it('deve permitir criar pedido com mesmo lab/patient mas serviços diferentes', async () => {
-      const orderData = {
-        lab: 'Lab Sorriso',
-        patient: 'João Silva',
-        customer: 'Dr. Maria Santos',
-        services: [
-          { name: 'Implante', value: 1700, status: 'PENDING' },
-        ],
-      };
-
-      const existingOrder = {
-        userId: mockUserId,
-        lab: 'Lab Sorriso',
-        patient: 'João Silva',
-        customer: 'Dr. Maria Santos',
-        services: [
-          { name: 'Coroa', value: 800, status: 'PENDING' },
-        ],
-        status: 'ACTIVE',
-      };
-
-      vi.mocked(Order.findOne).mockResolvedValue(existingOrder as any);
 
       const mockOrder = {
         ...orderData,
         userId: mockUserId,
-        save: vi.fn().mockResolvedValue({ _id: '456', ...orderData }),
+        state: OrderState.CREATED,
+        status: OrderStatus.ACTIVE,
+        save: vi.fn().mockResolvedValue({ _id: '123', ...orderData }),
       };
 
       vi.mocked(Order).mockImplementation(() => mockOrder as any);
@@ -181,7 +142,7 @@ describe('OrderService', () => {
 
       vi.mocked(Order.findOne).mockResolvedValue(mockOrder as any);
 
-      const result = await orderService.advanceOrderState(mockUserId, '123');
+      await orderService.advanceOrderState(mockUserId, '123');
 
       expect(mockOrder.canAdvanceState).toHaveBeenCalled();
       expect(mockOrder.advanceState).toHaveBeenCalled();

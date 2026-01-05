@@ -9,23 +9,6 @@ export class OrderService {
       throw new AppError('Order must have at least one service', 400);
     }
 
-    // Check for duplicate orders
-    const existingOrder = await Order.findOne({
-      userId,
-      lab: orderData.lab,
-      patient: orderData.patient,
-      customer: orderData.customer,
-      status: 'ACTIVE',
-    });
-
-    if (existingOrder) {
-      // Compare services to ensure it's truly duplicate
-      const hasSameServices = JSON.stringify(existingOrder.services) === JSON.stringify(orderData.services);
-      if (hasSameServices) {
-        throw new AppError('Duplicate order: An active order with the same details already exists', 409);
-      }
-    }
-
     const order = new Order({
       ...orderData,
       userId,

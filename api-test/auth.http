@@ -417,9 +417,9 @@ Authorization: Bearer {{attendant_token}}
 
 # VALIDAÇÕES:
 # - ❌ Não pode criar pedido sem serviços
-# - ❌ Não pode criar pedido duplicado (mesmo lab, patient, customer e services)
 # - ❌ Não pode avançar estado se já estiver COMPLETED
 # - ✅ Cada usuário vê apenas seus pedidos
+# - ✅ Orders podem ser duplicadas (permitido)
 
 # COMO TESTAR:
 # 1. Registre um usuário ATTENDANT ou LAB_ADMIN
