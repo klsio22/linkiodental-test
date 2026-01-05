@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import orderController from './controllers/order.controller';
 import { validate } from '../../common/middlewares/validator';
+import { authMiddleware } from '../../common/middlewares/auth';
 import {
   createOrderValidation,
   updateOrderValidation,
@@ -8,6 +9,9 @@ import {
 } from './validators/order.validator';
 
 const router = Router();
+
+// All order routes require authentication
+router.use(authMiddleware);
 
 router.get('/stats', orderController.getOrderStats);
 

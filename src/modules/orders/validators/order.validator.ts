@@ -1,86 +1,86 @@
 import { body, query } from 'express-validator';
-import { OrderState } from '../types/order.types';
+import { OrderState, OrderStatus } from '../types/order.types';
 
 export const createOrderValidation = [
-  body('patientName')
+  body('lab')
+    .trim()
+    .notEmpty()
+    .withMessage('Lab is required')
+    .isLength({ min: 2 })
+    .withMessage('Lab must be at least 2 characters long'),
+
+  body('patient')
     .trim()
     .notEmpty()
     .withMessage('Patient name is required')
     .isLength({ min: 3 })
     .withMessage('Patient name must be at least 3 characters long'),
 
-  body('dentistName')
+  body('customer')
     .trim()
     .notEmpty()
-    .withMessage('Dentist name is required')
+    .withMessage('Customer name is required')
     .isLength({ min: 3 })
-    .withMessage('Dentist name must be at least 3 characters long'),
+    .withMessage('Customer name must be at least 3 characters long'),
 
   body('services')
     .isArray({ min: 1 })
     .withMessage('At least one service must be provided'),
 
-  body('services.*')
+  body('services.*.name')
     .trim()
     .notEmpty()
-    .withMessage('Service cannot be empty'),
+    .withMessage('Service name is required'),
 
-  body('totalValue')
+  body('services.*.value')
     .isFloat({ min: 0.01 })
-    .withMessage('Total value must be greater than zero'),
+    .withMessage('Service value must be greater than zero'),
 
-  body('deadline')
-    .isISO8601()
-    .withMessage('Deadline must be a valid date')
-    .custom((value) => {
-      const deadline = new Date(value);
-      if (deadline <= new Date()) {
-        throw new Error('Deadline must be a future date');
-      }
-      return true;
-    }),
+  body('services.*.status')
+    .optional()
+    .isIn(['PENDING', 'DONE'])
+    .withMessage('Invalid service status'),
 ];
 
 export const updateOrderValidation = [
-  body('patientName')
+  body('lab')
+    .optional()
+    .trim()
+    .isLength({ min: 2 })
+    .withMessage('Lab must be at least 2 characters long'),
+
+  body('patient')
     .optional()
     .trim()
     .isLength({ min: 3 })
     .withMessage('Patient name must be at least 3 characters long'),
 
-  body('dentistName')
+  body('customer')
     .optional()
     .trim()
     .isLength({ min: 3 })
-    .withMessage('Dentist name must be at least 3 characters long'),
+    .withMessage('Customer name must be at least 3 characters long'),
 
   body('services')
     .optional()
     .isArray({ min: 1 })
-    .withMessage('At least one service must be provided'),
+    .withMessage('Must provide at least one service if updating services'),
 
-  body('services.*')
-    .optional()
+  body('services.*.name')
+    .if(() => body('services').exists())
     .trim()
     .notEmpty()
-    .withMessage('Service cannot be empty'),
+    .withMessage('Service name is required'),
 
-  body('totalValue')
-    .optional()
+  body('services.*.value')
+    .if(() => body('services').exists())
     .isFloat({ min: 0.01 })
-    .withMessage('Total value must be greater than zero'),
+    .withMessage('Service value must be greater than zero'),
 
-  body('deadline')
+  body('status')
     .optional()
-    .isISO8601()
-    .withMessage('Deadline must be a valid date')
-    .custom((value) => {
-      const deadline = new Date(value);
-      if (deadline <= new Date()) {
-        throw new Error('Deadline must be a future date');
-      }
-      return true;
-    }),
+    .isIn(Object.values(OrderStatus))
+    .withMessage('Invalid order status'),
 ];
 
 export const listOrdersValidation = [
@@ -98,6 +98,11 @@ export const listOrdersValidation = [
     .optional()
     .isIn(Object.values(OrderState))
     .withMessage(`State must be one of: ${Object.values(OrderState).join(', ')}`),
+
+  query('status')
+    .optional()
+    .isIn(Object.values(OrderStatus))
+    .withMessage(`Status must be one of: ${Object.values(OrderStatus).join(', ')}`),
 
   query('sortOrder')
     .optional()

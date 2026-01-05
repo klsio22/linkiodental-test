@@ -1,54 +1,72 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { IOrder, OrderState } from '../types/order.types';
+import { IOrder, OrderState, OrderStatus, ServiceStatus, Service } from '../types/order.types';
 
 export interface IOrderDocument extends IOrder, Document {
   canAdvanceState(): boolean;
   advanceState(): Promise<IOrderDocument>;
 }
 
+const serviceSchema = new Schema<Service>(
+  {
+    name: {
+      type: String,
+      required: [true, 'Service name is required'],
+    },
+    value: {
+      type: Number,
+      required: [true, 'Service value is required'],
+      min: [0.01, 'Service value must be greater than zero'],
+    },
+    status: {
+      type: String,
+      enum: Object.values(ServiceStatus),
+      default: ServiceStatus.PENDING,
+    },
+  },
+  { _id: false }
+);
+
 const orderSchema = new Schema<IOrderDocument>(
   {
-    patientName: {
+    userId: {
       type: String,
-      required: [true, 'Patient name is required'],
-      trim: true,
+      ref: 'User',
+      required: [true, 'User ID is required'],
+      index: true,
+    },
+    lab: {
+      type: String,
+      required: [true, 'Lab is required'],
+    },
+    patient: {
+      type: String,
+      required: [true, 'Patient is required'],
       minlength: [3, 'Patient name must have at least 3 characters'],
     },
-    dentistName: {
+    customer: {
       type: String,
-      required: [true, 'Dentist name is required'],
-      trim: true,
-      minlength: [3, 'Dentist name must have at least 3 characters'],
+      required: [true, 'Customer is required'],
+      minlength: [3, 'Customer name must have at least 3 characters'],
     },
     services: {
-      type: [String],
+      type: [serviceSchema],
       required: [true, 'At least one service must be informed'],
       validate: {
-        validator: function (v: string[]) {
+        validator: function (v: Service[]) {
           return v && v.length > 0;
         },
         message: 'At least one service must be informed',
-      },
-    },
-    totalValue: {
-      type: Number,
-      required: [true, 'Total value is required'],
-      min: [0.01, 'Total value must be greater than zero'],
-    },
-    deadline: {
-      type: Date,
-      required: [true, 'Deadline is required'],
-      validate: {
-        validator: function (v: Date) {
-          return v > new Date();
-        },
-        message: 'Deadline must be a future date',
       },
     },
     state: {
       type: String,
       enum: Object.values(OrderState),
       default: OrderState.CREATED,
+    },
+    status: {
+      type: String,
+      enum: Object.values(OrderStatus),
+      default: OrderStatus.ACTIVE,
     },
   },
   {
@@ -64,9 +82,11 @@ const orderSchema = new Schema<IOrderDocument>(
   }
 );
 
-orderSchema.index({ state: 1, createdAt: -1 });
-orderSchema.index({ patientName: 1 });
-orderSchema.index({ dentistName: 1 });
+orderSchema.index({ userId: 1, createdAt: -1 });
+orderSchema.index({ userId: 1, state: 1 });
+orderSchema.index({ userId: 1, status: 1 });
+orderSchema.index({ patient: 1 });
+orderSchema.index({ customer: 1 });
 
 orderSchema.methods.canAdvanceState = function (): boolean {
   const stateSequence = [OrderState.CREATED, OrderState.ANALYSIS, OrderState.COMPLETED];
@@ -74,7 +94,6 @@ orderSchema.methods.canAdvanceState = function (): boolean {
   return currentIndex < stateSequence.length - 1;
 };
 
-// Método de instância: avançar o estado
 orderSchema.methods.advanceState = async function (): Promise<IOrderDocument> {
   const stateSequence = [OrderState.CREATED, OrderState.ANALYSIS, OrderState.COMPLETED];
   const currentIndex = stateSequence.indexOf(this.state);
@@ -91,12 +110,10 @@ orderSchema.methods.advanceState = async function (): Promise<IOrderDocument> {
   return await this.save();
 };
 
-// Validação pré-save: garantir que serviços não estão vazios e valor é positivo
 orderSchema.pre('save', function (next) {
-  if (this.services.length === 0) {
+  const doc = this as any;
+  if (doc.services && doc.services.length === 0) {
     next(new Error('Order must have at least one service'));
-  } else if (this.totalValue <= 0) {
-    next(new Error('Total value must be greater than zero'));
   } else {
     next();
   }

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import ordersModule from '../modules/orders/orders.module';
+import usersModule from '../modules/users/users.module';
 
 const router = Router();
 
@@ -11,6 +12,7 @@ router.get('/health', (_req, res) => {
   });
 });
 
+router.use(usersModule.router);
 router.use(ordersModule.router);
 
 export default router;

@@ -1,0 +1,426 @@
+### Lab Orders API - Test Collection with Authentication
+### Base URL
+@baseUrl = http://localhost:3000
+@apiUrl = {{baseUrl}}/api
+
+###############################################################################
+### AUTHENTICATION TOKENS
+###############################################################################
+
+### 1. Register New User
+POST {{apiUrl}}/users/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "customer1@example.com",
+  "password": "senha123",
+  "name": "João Silva",
+  "role": "CUSTOMER"
+}
+
+### 2. Register Lab Admin
+POST {{apiUrl}}/users/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "admin123",
+  "name": "Admin Lab",
+  "role": "LAB_ADMIN"
+}
+
+### 3. Login User - Get Token
+POST {{apiUrl}}/users/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "customer1@example.com",
+  "password": "senha123"
+}
+
+### 4. Login Admin - Get Token
+POST {{apiUrl}}/users/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+
+### 5. Get User Profile
+GET {{apiUrl}}/users/profile HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### 6. Update User Profile
+PUT {{apiUrl}}/users/profile HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+Content-Type: application/json
+
+{
+  "name": "João Silva Updated"
+}
+
+###############################################################################
+### ORDERS - CREATE
+###############################################################################
+
+### Create Order - Success
+POST {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+Content-Type: application/json
+
+{
+  "lab": "Lab Sorriso",
+  "patient": "João Silva",
+  "customer": "Dr. Maria Santos",
+  "services": [
+    {
+      "name": "Coroa de Porcelana",
+      "value": 800.00,
+      "status": "PENDING"
+    },
+    {
+      "name": "Implante Dentário",
+      "value": 1700.00,
+      "status": "PENDING"
+    }
+  ]
+}
+
+### Create Order - Multiple Services
+POST {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+Content-Type: application/json
+
+{
+  "lab": "Lab Perfecto",
+  "patient": "Ana Costa",
+  "customer": "Dr. Pedro Lima",
+  "services": [
+    {
+      "name": "Prótese Parcial",
+      "value": 1500.00
+    },
+    {
+      "name": "Aparelho Ortodôntico",
+      "value": 1200.00
+    },
+    {
+      "name": "Contenção",
+      "value": 500.00
+    }
+  ]
+}
+
+### Create Order - Single Service
+POST {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+Content-Type: application/json
+
+{
+  "lab": "Lab Express",
+  "patient": "Carlos mendes",
+  "customer": "Dra. Fernanda Costa",
+  "services": [
+    {
+      "name": "Limpeza Profunda",
+      "value": 300.00
+    }
+  ]
+}
+
+### Create Order - Invalid (Missing Services)
+POST {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+Content-Type: application/json
+
+{
+  "lab": "Lab Test",
+  "patient": "Teste",
+  "customer": "Dr. Teste",
+  "services": []
+}
+
+### Create Order - Invalid (Service Value <= 0)
+POST {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+Content-Type: application/json
+
+{
+  "lab": "Lab Test",
+  "patient": "Teste",
+  "customer": "Dr. Teste",
+  "services": [
+    {
+      "name": "Serviço Inválido",
+      "value": 0
+    }
+  ]
+}
+
+### Create Order - Invalid (Missing Patient Name)
+POST {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+Content-Type: application/json
+
+{
+  "lab": "Lab Test",
+  "customer": "Dr. Teste",
+  "services": [
+    {
+      "name": "Serviço",
+      "value": 100.00
+    }
+  ]
+}
+
+### Create Order - No Authentication
+POST {{apiUrl}}/orders HTTP/1.1
+Content-Type: application/json
+
+{
+  "lab": "Lab Test",
+  "patient": "Teste",
+  "customer": "Dr. Teste",
+  "services": [
+    {
+      "name": "Serviço",
+      "value": 100.00
+    }
+  ]
+}
+
+###############################################################################
+### ORDERS - LIST & FILTER
+###############################################################################
+
+### List Orders - User's Orders (Paginated)
+GET {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### List Orders - Page 2, Limit 5
+GET {{apiUrl}}/orders?page=2&limit=5 HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### List Orders - Filter by State CREATED
+GET {{apiUrl}}/orders?state=CREATED HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### List Orders - Filter by State ANALYSIS
+GET {{apiUrl}}/orders?state=ANALYSIS HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### List Orders - Filter by Status ACTIVE
+GET {{apiUrl}}/orders?status=ACTIVE HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### List Orders - Filter by Patient Name
+GET {{apiUrl}}/orders?patientName=João HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### List Orders - Filter by Customer Name
+GET {{apiUrl}}/orders?dentistName=Maria HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### List Orders - Sort by CreatedAt Ascending
+GET {{apiUrl}}/orders?sortBy=createdAt&sortOrder=asc HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### List Orders - Sort by CreatedAt Descending
+GET {{apiUrl}}/orders?sortBy=createdAt&sortOrder=desc HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### List Orders - Complex Filter
+GET {{apiUrl}}/orders?state=ANALYSIS&status=ACTIVE&page=1&limit=10&sortBy=createdAt&sortOrder=desc HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### List Orders - No Authentication
+GET {{apiUrl}}/orders HTTP/1.1
+
+###############################################################################
+### ORDERS - GET BY ID
+###############################################################################
+
+### Get Order by ID
+GET {{apiUrl}}/orders/{order_id} HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### Get Order by ID - Invalid Format
+GET {{apiUrl}}/orders/invalid-id HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### Get Order by ID - Non-existent
+GET {{apiUrl}}/orders/507f1f77bcf86cd799439999 HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### Get Order by ID - No Authentication
+GET {{apiUrl}}/orders/{order_id} HTTP/1.1
+
+###############################################################################
+### ORDERS - UPDATE
+###############################################################################
+
+### Update Order - Change Customer
+PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+Content-Type: application/json
+
+{
+  "customer": "Dr. João Nova Silva"
+}
+
+### Update Order - Update Services
+PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+Content-Type: application/json
+
+{
+  "services": [
+    {
+      "name": "Coroa de Zircônia",
+      "value": 950.00,
+      "status": "DONE"
+    }
+  ]
+}
+
+### Update Order - Change Status
+PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+Content-Type: application/json
+
+{
+  "status": "DELETED"
+}
+
+### Update Order - Invalid (Cannot change state)
+PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+Content-Type: application/json
+
+{
+  "state": "ANALYSIS"
+}
+
+### Update Order - No Services
+PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+Content-Type: application/json
+
+{
+  "services": []
+}
+
+### Update Order - No Authentication
+PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
+Content-Type: application/json
+
+{
+  "customer": "Dr. Novo"
+}
+
+###############################################################################
+### ORDERS - ADVANCE STATE
+###############################################################################
+
+### Advance Order State (CREATED -> ANALYSIS)
+PATCH {{apiUrl}}/orders/{order_id}/advance HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### Advance Order State - Already at Final State
+PATCH {{apiUrl}}/orders/{order_id}/advance HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### Advance Order State - No Authentication
+PATCH {{apiUrl}}/orders/{order_id}/advance HTTP/1.1
+
+###############################################################################
+### ORDERS - DELETE
+###############################################################################
+
+### Delete Order
+DELETE {{apiUrl}}/orders/{order_id} HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### Delete Order - Already Deleted
+DELETE {{apiUrl}}/orders/{order_id} HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### Delete Order - No Authentication
+DELETE {{apiUrl}}/orders/{order_id} HTTP/1.1
+
+###############################################################################
+### ORDERS - STATISTICS
+###############################################################################
+
+### Get User Order Statistics
+GET {{apiUrl}}/orders/stats HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### Get Stats - No Authentication
+GET {{apiUrl}}/orders/stats HTTP/1.1
+
+###############################################################################
+### HEALTH CHECK
+###############################################################################
+
+### Health Check
+GET {{apiUrl}}/health HTTP/1.1
+
+### Root Endpoint
+GET {{baseUrl}}/ HTTP/1.1
+
+###############################################################################
+### WORKFLOW EXAMPLES
+###############################################################################
+
+### Example Workflow - Step 1: Register
+POST {{apiUrl}}/users/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "workflow@example.com",
+  "password": "workflow123",
+  "name": "Workflow User"
+}
+
+### Example Workflow - Step 2: Create Order
+POST {{apiUrl}}/orders HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+Content-Type: application/json
+
+{
+  "lab": "Lab Workflow",
+  "patient": "Paciente Workflow",
+  "customer": "Dr. Workflow",
+  "services": [
+    {
+      "name": "Serviço Workflow",
+      "value": 500.00
+    }
+  ]
+}
+
+### Example Workflow - Step 3: List Orders
+GET {{apiUrl}}/orders?state=CREATED HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### Example Workflow - Step 4: Advance State
+PATCH {{apiUrl}}/orders/{order_id}/advance HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+### Example Workflow - Step 5: Get Statistics
+GET {{apiUrl}}/orders/stats HTTP/1.1
+Authorization: Bearer {token_from_login_response}
+
+###############################################################################
+### NOTES FOR TESTING
+###############################################################################
+
+# 1. First, register a user or login to get a token
+# 2. Replace {token_from_login_response} with the actual JWT token from login
+# 3. Replace {order_id} with an actual order ID from a create/list response
+# 4. All order operations require authentication (Bearer token in Authorization header)
+# 5. User registration is public (no authentication required)
+# 6. Each user can only see/modify their own orders
+

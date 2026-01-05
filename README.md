@@ -58,6 +58,69 @@ npm run format       # Formatar código
 
 **Nota:** O arquivo `.env` usa `localhost` por padrão. Para Docker, altere para `mongodb`.
 
+## 🔐 Autenticação
+
+O sistema utiliza **JWT (JSON Web Tokens)** para autenticação. Todos os endpoints de pedidos requerem autenticação.
+
+### Endpoints de Usuário
+
+| Método | Endpoint | Descrição | Auth |
+|--------|----------|-----------|------|
+| POST | `/api/users/register` | Registrar novo usuário | ❌ |
+| POST | `/api/users/login` | Fazer login | ❌ |
+| GET | `/api/users/profile` | Ver perfil | ✅ |
+| PUT | `/api/users/profile` | Atualizar perfil | ✅ |
+
+### 1️⃣ Registrar Usuário
+
+```bash
+curl -X POST http://localhost:3000/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "usuario@example.com",
+    "password": "senha123",
+    "name": "João Silva",
+    "role": "CUSTOMER"
+  }'
+```
+
+**Resposta:**
+```json
+{
+  "id": "507f1f77bcf86cd799439011",
+  "email": "usuario@example.com",
+  "name": "João Silva",
+  "role": "CUSTOMER",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+### 2️⃣ Fazer Login
+
+```bash
+curl -X POST http://localhost:3000/api/users/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "usuario@example.com",
+    "password": "senha123"
+  }'
+```
+
+### 3️⃣ Usar Token em Requisições
+
+Adicione o header `Authorization` em todas as requisições de pedidos:
+
+```bash
+curl -X GET http://localhost:3000/api/orders \
+  -H "Authorization: Bearer {seu_token_jwt}"
+```
+
+### Roles Disponíveis
+
+- **CUSTOMER**: Usuário padrão (pode gerenciar seus pedidos)
+- **LAB_ADMIN**: Administrador do laboratório
+- **SUPER_ADMIN**: Super administrador
+
 ## 🧪 Testar a API
 
 ### Com REST Client (VS Code)
@@ -84,56 +147,77 @@ O arquivo `orders.http` contém:
 
 ### Com cURL
 
+#### Endpoints de Usuário
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/api/users/register` | Registrar novo usuário |
+| POST | `/api/users/login` | Fazer login e obter token |
+| GET | `/api/users/profile` | Ver perfil (requer auth) |
+| PUT | `/api/users/profile` | Atualizar perfil (requer auth) |
+
+#### Endpoints de Pedidos (Requerem Autenticação)
+
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
 | POST | `/api/orders` | Criar novo pedido |
-| GET | `/api/orders` | Listar pedidos (paginação/filtros) |
+| GET | `/api/orders` | Listar pedidos do usuário |
 | GET | `/api/orders/:id` | Buscar pedido por ID |
 | PUT | `/api/orders/:id` | Atualizar pedido |
 | DELETE | `/api/orders/:id` | Deletar pedido |
 | PATCH | `/api/orders/:id/advance` | Avançar estado |
-| GET | `/api/orders/stats` | Estatísticas |
+| GET | `/api/orders/stats` | Estatísticas do usuário |
 
 ## 💡 Exemplos de Uso
 
 ### Criar Pedido
 
 ```bash
+# Primeiro faça login para obter o token
+TOKEN=$(curl -s -X POST http://localhost:3000/api/users/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"usuario@example.com","password":"senha123"}' \
+  | jq -r '.token')
+
+# Depois crie um pedido
 curl -X POST http://localhost:3000/api/orders \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "patientName": "João Silva",
-    "dentistName": "Dr. Maria Santos",
-    "services": ["Coroa", "Implante"],
-    "totalValue": 1500.00,
-    "deadline": "2026-02-15"
+    "lab": "Lab Sorriso",
+    "patient": "João Silva",
+    "customer": "Dr. Maria Santos",
+    "services": [
+      {"name": "Coroa", "value": 800.00},
+      {"name": "Implante", "value": 700.00}
+    ]
   }'
 ```
 
-### Listar com Filtros
+### Listar Pedidos do Usuário
 
 ```bash
-# Por estado
-curl "http://localhost:3000/api/orders?state=ANALYSIS"
+# Listar todos os pedidos do usuário autenticado
+curl -X GET "http://localhost:3000/api/orders" \
+  -H "Authorization: Bearer $TOKEN"
 
-# Por nome e paginação
-curl "http://localhost:3000/api/orders?patientName=João&page=1&limit=10"
-
-# Ordenar
-curl "http://localhost:3000/api/orders?sortBy=createdAt&sortOrder=desc"
+# Com filtros
+curl -X GET "http://localhost:3000/api/orders?state=ANALYSIS&limit=20" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Avançar Estado
 
 ```bash
-# De CREATED → ANALYSIS → COMPLETED
-curl -X PATCH http://localhost:3000/api/orders/{id}/advance
+curl -X PATCH "http://localhost:3000/api/orders/{id}/advance" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Obter Estatísticas
 
 ```bash
-curl http://localhost:3000/api/orders/stats
+curl -X GET http://localhost:3000/api/orders/stats \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 Para mais exemplos, veja [EXAMPLES.md](EXAMPLES.md).
