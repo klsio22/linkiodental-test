@@ -9,23 +9,18 @@ import { errorHandler } from './middlewares/errorHandler';
 export const createApp = (): Application => {
   const app = express();
 
-  // Middlewares de segurança
   app.use(helmet());
   app.use(cors());
 
-  // Middlewares de parsing
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // Logging
   if (config.nodeEnv === 'development') {
     app.use(morgan('dev'));
   }
 
-  // Rotas
   app.use('/api', routes);
 
-  // Rota raiz
   app.get('/', (_req, res) => {
     res.json({
       message: 'Lab Orders API',
@@ -38,15 +33,13 @@ export const createApp = (): Application => {
     });
   });
 
-  // 404 handler
   app.use((_req, res) => {
     res.status(404).json({
       status: 'error',
-      message: 'Rota não encontrada',
+      message: 'Route not found',
     });
   });
 
-  // Error handler (deve ser o último middleware)
   app.use(errorHandler);
 
   return app;

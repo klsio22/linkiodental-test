@@ -10,39 +10,39 @@ const orderSchema = new Schema<IOrderDocument>(
   {
     patientName: {
       type: String,
-      required: [true, 'Nome do paciente é obrigatório'],
+      required: [true, 'Patient name is required'],
       trim: true,
-      minlength: [3, 'Nome do paciente deve ter no mínimo 3 caracteres'],
+      minlength: [3, 'Patient name must have at least 3 characters'],
     },
     dentistName: {
       type: String,
-      required: [true, 'Nome do dentista é obrigatório'],
+      required: [true, 'Dentist name is required'],
       trim: true,
-      minlength: [3, 'Nome do dentista deve ter no mínimo 3 caracteres'],
+      minlength: [3, 'Dentist name must have at least 3 characters'],
     },
     services: {
       type: [String],
-      required: [true, 'Pelo menos um serviço deve ser informado'],
+      required: [true, 'At least one service must be informed'],
       validate: {
         validator: function (v: string[]) {
           return v && v.length > 0;
         },
-        message: 'Pelo menos um serviço deve ser informado',
+        message: 'At least one service must be informed',
       },
     },
     totalValue: {
       type: Number,
-      required: [true, 'Valor total é obrigatório'],
-      min: [0.01, 'Valor total deve ser maior que zero'],
+      required: [true, 'Total value is required'],
+      min: [0.01, 'Total value must be greater than zero'],
     },
     deadline: {
       type: Date,
-      required: [true, 'Prazo é obrigatório'],
+      required: [true, 'Deadline is required'],
       validate: {
         validator: function (v: Date) {
           return v > new Date();
         },
-        message: 'Prazo deve ser uma data futura',
+        message: 'Deadline must be a future date',
       },
     },
     state: {
@@ -64,12 +64,10 @@ const orderSchema = new Schema<IOrderDocument>(
   }
 );
 
-// Índices para otimizar buscas
 orderSchema.index({ state: 1, createdAt: -1 });
 orderSchema.index({ patientName: 1 });
 orderSchema.index({ dentistName: 1 });
 
-// Método de instância: verificar se pode avançar o estado
 orderSchema.methods.canAdvanceState = function (): boolean {
   const stateSequence = [OrderState.CREATED, OrderState.ANALYSIS, OrderState.COMPLETED];
   const currentIndex = stateSequence.indexOf(this.state);
@@ -82,11 +80,11 @@ orderSchema.methods.advanceState = async function (): Promise<IOrderDocument> {
   const currentIndex = stateSequence.indexOf(this.state);
 
   if (currentIndex === -1) {
-    throw new Error('Estado atual inválido');
+    throw new Error('Invalid current state');
   }
 
   if (currentIndex >= stateSequence.length - 1) {
-    throw new Error('Pedido já está no estado final');
+    throw new Error('Order is already in final state');
   }
 
   this.state = stateSequence[currentIndex + 1];
@@ -96,9 +94,9 @@ orderSchema.methods.advanceState = async function (): Promise<IOrderDocument> {
 // Validação pré-save: garantir que serviços não estão vazios e valor é positivo
 orderSchema.pre('save', function (next) {
   if (this.services.length === 0) {
-    next(new Error('Pedido deve ter pelo menos um serviço'));
+    next(new Error('Order must have at least one service'));
   } else if (this.totalValue <= 0) {
-    next(new Error('Valor total deve ser maior que zero'));
+    next(new Error('Total value must be greater than zero'));
   } else {
     next();
   }

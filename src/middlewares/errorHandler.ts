@@ -27,32 +27,28 @@ export const errorHandler = (
     });
   }
 
-  // Erro do Mongoose - ValidationError
   if (error.name === 'ValidationError') {
     return res.status(400).json({
       status: 'error',
-      message: 'Erro de validação',
+      message: 'Validation error',
       errors: error.message,
     });
   }
 
-  // Erro do Mongoose - CastError (ID inválido)
   if (error.name === 'CastError') {
     return res.status(400).json({
       status: 'error',
-      message: 'ID inválido',
+      message: 'Invalid ID',
     });
   }
 
-  // Erro não tratado
-  console.error('❌ Erro não tratado:', error);
+  console.error('❌ Unhandled error:', error);
   return res.status(500).json({
     status: 'error',
-    message: 'Erro interno do servidor',
+    message: 'Internal server error',
   });
 };
 
-// Wrapper para funções assíncronas
 export const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) => {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);

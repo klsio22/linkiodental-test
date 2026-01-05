@@ -5,37 +5,37 @@ export const createOrderValidation = [
   body('patientName')
     .trim()
     .notEmpty()
-    .withMessage('Nome do paciente é obrigatório')
+    .withMessage('Patient name is required')
     .isLength({ min: 3 })
-    .withMessage('Nome do paciente deve ter no mínimo 3 caracteres'),
+    .withMessage('Patient name must be at least 3 characters long'),
 
   body('dentistName')
     .trim()
     .notEmpty()
-    .withMessage('Nome do dentista é obrigatório')
+    .withMessage('Dentist name is required')
     .isLength({ min: 3 })
-    .withMessage('Nome do dentista deve ter no mínimo 3 caracteres'),
+    .withMessage('Dentist name must be at least 3 characters long'),
 
   body('services')
     .isArray({ min: 1 })
-    .withMessage('Pelo menos um serviço deve ser informado'),
+    .withMessage('At least one service must be provided'),
 
   body('services.*')
     .trim()
     .notEmpty()
-    .withMessage('Serviço não pode ser vazio'),
+    .withMessage('Service cannot be empty'),
 
   body('totalValue')
     .isFloat({ min: 0.01 })
-    .withMessage('Valor total deve ser maior que zero'),
+    .withMessage('Total value must be greater than zero'),
 
   body('deadline')
     .isISO8601()
-    .withMessage('Prazo deve ser uma data válida')
+    .withMessage('Deadline must be a valid date')
     .custom((value) => {
       const deadline = new Date(value);
       if (deadline <= new Date()) {
-        throw new Error('Prazo deve ser uma data futura');
+        throw new Error('Deadline must be a future date');
       }
       return true;
     }),
@@ -46,38 +46,38 @@ export const updateOrderValidation = [
     .optional()
     .trim()
     .isLength({ min: 3 })
-    .withMessage('Nome do paciente deve ter no mínimo 3 caracteres'),
+    .withMessage('Patient name must be at least 3 characters long'),
 
   body('dentistName')
     .optional()
     .trim()
     .isLength({ min: 3 })
-    .withMessage('Nome do dentista deve ter no mínimo 3 caracteres'),
+    .withMessage('Dentist name must be at least 3 characters long'),
 
   body('services')
     .optional()
     .isArray({ min: 1 })
-    .withMessage('Pelo menos um serviço deve ser informado'),
+    .withMessage('At least one service must be provided'),
 
   body('services.*')
     .optional()
     .trim()
     .notEmpty()
-    .withMessage('Serviço não pode ser vazio'),
+    .withMessage('Service cannot be empty'),
 
   body('totalValue')
     .optional()
     .isFloat({ min: 0.01 })
-    .withMessage('Valor total deve ser maior que zero'),
+    .withMessage('Total value must be greater than zero'),
 
   body('deadline')
     .optional()
     .isISO8601()
-    .withMessage('Prazo deve ser uma data válida')
+    .withMessage('Deadline must be a valid date')
     .custom((value) => {
       const deadline = new Date(value);
       if (deadline <= new Date()) {
-        throw new Error('Prazo deve ser uma data futura');
+        throw new Error('Deadline must be a future date');
       }
       return true;
     }),
@@ -87,20 +87,20 @@ export const listOrdersValidation = [
   query('page')
     .optional()
     .isInt({ min: 1 })
-    .withMessage('Página deve ser um número inteiro maior que 0'),
+    .withMessage('Page must be an integer greater than 0'),
 
   query('limit')
     .optional()
     .isInt({ min: 1, max: 100 })
-    .withMessage('Limite deve ser um número entre 1 e 100'),
+    .withMessage('Limit must be a number between 1 and 100'),
 
   query('state')
     .optional()
     .isIn(Object.values(OrderState))
-    .withMessage(`Estado deve ser um dos: ${Object.values(OrderState).join(', ')}`),
+    .withMessage(`State must be one of: ${Object.values(OrderState).join(', ')}`),
 
   query('sortOrder')
     .optional()
     .isIn(['asc', 'desc'])
-    .withMessage('Ordenação deve ser "asc" ou "desc"'),
+    .withMessage('Sort order must be "asc" or "desc"'),
 ];

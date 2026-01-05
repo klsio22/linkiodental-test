@@ -3,26 +3,19 @@ import { OrderQueryParams, PaginatedResponse } from '../types/order.types';
 import { AppError } from '../middlewares/errorHandler';
 
 export class OrderService {
-  /**
-   * Criar novo pedido
-   */
   async createOrder(orderData: Partial<IOrderDocument>): Promise<IOrderDocument> {
-    // Validações de negócio
     if (!orderData.services || orderData.services.length === 0) {
-      throw new AppError('Pedido deve ter pelo menos um serviço', 400);
+      throw new AppError('Order must have at least one service', 400);
     }
 
     if (!orderData.totalValue || orderData.totalValue <= 0) {
-      throw new AppError('Valor total deve ser maior que zero', 400);
+      throw new AppError('Total value must be greater than zero', 400);
     }
 
     const order = new Order(orderData);
     return await order.save();
   }
 
-  /**
-   * Listar pedidos com paginação e filtros
-   */
   async listOrders(params: OrderQueryParams): Promise<PaginatedResponse<IOrderDocument>> {
     const {
       page = 1,
@@ -44,10 +37,8 @@ export class OrderService {
     const sort: Record<string, 1 | -1> = {};
     sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
 
-    // Paginação
     const skip = (page - 1) * limit;
 
-    // Executar queries em paralelo
     const [orders, total] = await Promise.all([
       Order.find(filter).sort(sort).skip(skip).limit(limit).exec(),
       Order.countDocuments(filter),
@@ -64,36 +55,25 @@ export class OrderService {
     };
   }
 
-  /**
-   * Buscar pedido por ID
-   */
   async getOrderById(id: string): Promise<IOrderDocument> {
     const order = await Order.findById(id);
     if (!order) {
-      throw new AppError('Pedido não encontrado', 404);
+      throw new AppError('Order not found', 404);
     }
     return order;
   }
 
-  /**
-   * Atualizar pedido
-   */
   async updateOrder(id: string, updateData: Partial<IOrderDocument>): Promise<IOrderDocument> {
-    // Não permitir atualização direta do estado
     if (updateData.state) {
-      throw new AppError(
-        'Use o endpoint /advance para alterar o estado do pedido',
-        400
-      );
+      throw new AppError('Use PATCH /advance to change order state', 400);
     }
 
-    // Validações de negócio
     if (updateData.services?.length === 0) {
-      throw new AppError('Pedido deve ter pelo menos um serviço', 400);
+      throw new AppError('Order must have at least one service', 400);
     }
 
     if (updateData.totalValue !== undefined && updateData.totalValue <= 0) {
-      throw new AppError('Valor total deve ser maior que zero', 400);
+      throw new AppError('Total value must be greater than zero', 400);
     }
 
     const order = await Order.findByIdAndUpdate(id, updateData, {
@@ -102,38 +82,29 @@ export class OrderService {
     });
 
     if (!order) {
-      throw new AppError('Pedido não encontrado', 404);
+      throw new AppError('Order not found', 404);
     }
 
     return order;
   }
 
-  /**
-   * Deletar pedido
-   */
   async deleteOrder(id: string): Promise<void> {
     const order = await Order.findByIdAndDelete(id);
     if (!order) {
-      throw new AppError('Pedido não encontrado', 404);
+      throw new AppError('Order not found', 404);
     }
   }
 
-  /**
-   * Avançar estado do pedido
-   */
   async advanceOrderState(id: string): Promise<IOrderDocument> {
     const order = await this.getOrderById(id);
 
     if (!order.canAdvanceState()) {
-      throw new AppError('Pedido já está no estado final', 400);
+      throw new AppError('Order is already in final state', 400);
     }
 
     return await order.advanceState();
   }
 
-  /**
-   * Obter estatísticas de pedidos
-   */
   async getOrderStats() {
     const stats = await Order.aggregate([
       {

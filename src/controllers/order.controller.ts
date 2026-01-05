@@ -4,10 +4,6 @@ import { asyncHandler } from '../middlewares/errorHandler';
 import { OrderQueryParams } from '../types/order.types';
 
 export class OrderController {
-  /**
-   * Criar novo pedido
-   * POST /api/orders
-   */
   createOrder = asyncHandler(async (req: Request, res: Response) => {
     const order = await orderService.createOrder(req.body);
     res.status(201).json({
@@ -16,10 +12,6 @@ export class OrderController {
     });
   });
 
-  /**
-   * Listar pedidos
-   * GET /api/orders
-   */
   listOrders = asyncHandler(async (req: Request, res: Response) => {
     const queryParams: OrderQueryParams = {
       page: Number.parseInt(req.query.page as string) || 1,
@@ -38,10 +30,6 @@ export class OrderController {
     });
   });
 
-  /**
-   * Buscar pedido por ID
-   * GET /api/orders/:id
-   */
   getOrderById = asyncHandler(async (req: Request, res: Response) => {
     const order = await orderService.getOrderById(req.params.id);
     res.status(200).json({
@@ -50,10 +38,6 @@ export class OrderController {
     });
   });
 
-  /**
-   * Atualizar pedido
-   * PUT /api/orders/:id
-   */
   updateOrder = asyncHandler(async (req: Request, res: Response) => {
     const order = await orderService.updateOrder(req.params.id, req.body);
     res.status(200).json({
@@ -62,19 +46,11 @@ export class OrderController {
     });
   });
 
-  /**
-   * Deletar pedido
-   * DELETE /api/orders/:id
-   */
   deleteOrder = asyncHandler(async (req: Request, res: Response) => {
     await orderService.deleteOrder(req.params.id);
     res.status(204).send();
   });
 
-  /**
-   * Avançar estado do pedido
-   * PATCH /api/orders/:id/advance
-   */
   advanceOrderState = asyncHandler(async (req: Request, res: Response) => {
     const order = await orderService.advanceOrderState(req.params.id);
     res.status(200).json({
@@ -83,10 +59,6 @@ export class OrderController {
     });
   });
 
-  /**
-   * Obter estatísticas
-   * GET /api/orders/stats
-   */
   getOrderStats = asyncHandler(async (_req: Request, res: Response) => {
     const stats = await orderService.getOrderStats();
     res.status(200).json({

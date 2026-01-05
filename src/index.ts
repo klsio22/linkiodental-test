@@ -4,23 +4,19 @@ import { config } from './config/env';
 
 const startServer = async () => {
   try {
-    // Conectar ao MongoDB
     await connectDB();
 
-    // Criar aplicação Express
     const app = createApp();
 
-    // Iniciar servidor
     app.listen(config.port, () => {
-      console.log(`🚀 Servidor rodando na porta ${config.port}`);
-      console.log(`🌍 Ambiente: ${config.nodeEnv}`);
-      console.log(`📝 Documentação: http://localhost:${config.port}/`);
+      console.log(`🚀 Server running on port ${config.port}`);
+      console.log(`🌍 Environment: ${config.nodeEnv}`);
+      console.log(`📝 Docs: http://localhost:${config.port}/`);
     });
   } catch (error) {
-    console.error('❌ Erro ao iniciar servidor:', error);
+    console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
 };
 
-// Iniciar servidor
 startServer();
