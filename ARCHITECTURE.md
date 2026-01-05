@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-Este projeto segue uma arquitetura em camadas (layered architecture) com separação clara de responsabilidades:
+Este projeto segue uma **arquitetura modular** inspirada no NestJS, onde cada funcionalidade (feature/domínio) é organizada em seu próprio módulo autocontido. Esta abordagem oferece melhor organização, escalabilidade e manutenibilidade.
 
 ```
 ┌─────────────────────────────────────────┐
@@ -10,26 +10,45 @@ Este projeto segue uma arquitetura em camadas (layered architecture) com separa�
 └─────────────────┬───────────────────────┘
                   │
 ┌─────────────────▼───────────────────────┐
-│         Routes (Rotas)                   │ ← Define endpoints da API
+│         Application (app.ts)             │ ← Entry point, configuração Express
 └─────────────────┬───────────────────────┘
                   │
 ┌─────────────────▼───────────────────────┐
-│       Validators (Validação)             │ ← Valida entrada de dados
+│         Common Router                    │ ← Health check, registro de módulos
 └─────────────────┬───────────────────────┘
                   │
-┌─────────────────▼───────────────────────┐
-│      Controllers (Controladores)         │ ← Recebe requisições HTTP
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│       Services (Lógica de Negócio)       │ ← Regras de negócio
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│         Models (Mongoose)                │ ← Esquema do banco
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
+          ┌───────┴───────┐
+          ▼               ▼
+┌──────────────────┐  ┌──────────────────┐
+│  Orders Module   │  │  Future Module   │
+│                  │  │  (Users, Auth)   │
+└──────────────────┘  └──────────────────┘
+          │
+          ▼
+┌─────────────────────────────────────────┐
+│    Module Internal Structure             │
+│  ┌────────────────────────────────────┐ │
+│  │ Routes (order.routes.ts)           │ │ ← Define endpoints
+│  └──────────────┬─────────────────────┘ │
+│                 ▼                        │
+│  ┌────────────────────────────────────┐ │
+│  │ Validators                         │ │ ← Validação de entrada
+│  └──────────────┬─────────────────────┘ │
+│                 ▼                        │
+│  ┌────────────────────────────────────┐ │
+│  │ Controllers                        │ │ ← HTTP handlers
+│  └──────────────┬─────────────────────┘ │
+│                 ▼                        │
+│  ┌────────────────────────────────────┐ │
+│  │ Services (Business Logic)          │ │ ← Regras de negócio
+│  └──────────────┬─────────────────────┘ │
+│                 ▼                        │
+│  ┌────────────────────────────────────┐ │
+│  │ Models (Mongoose Schemas)          │ │ ← Esquema do banco
+│  └──────────────┬─────────────────────┘ │
+└─────────────────┼───────────────────────┘
+                  ▼
+┌─────────────────────────────────────────┐
 │         MongoDB Database                 │ ← Persistência
 └─────────────────────────────────────────┘
 ```
@@ -38,71 +57,163 @@ Este projeto segue uma arquitetura em camadas (layered architecture) com separa�
 
 ```
 src/
-├── config/                 # Configurações
-│   ├── env.ts             # Variáveis de ambiente
-│   └── database.ts        # Conexão MongoDB
+├── common/                          # Código compartilhado entre módulos
+│   ├── config/                      # Configurações globais
+│   │   ├── env.ts                  # Variáveis de ambiente
+│   │   └── database.ts             # Conexão MongoDB
+│   ├── middlewares/                 # Middlewares compartilhados
+│   │   ├── errorHandler.ts         # Tratamento global de erros
+│   │   └── validator.ts            # Middleware de validação
+│   └── index.ts                     # Router principal (health + módulos)
 │
-├── models/                # Models Mongoose (esquema do banco)
-│   └── Order.model.ts     # Model de pedidos
+├── modules/                         # Módulos de funcionalidades
+│   └── orders/                      # Módulo de pedidos
+│       ├── controllers/
+│       │   └── order.controller.ts # Controller de pedidos
+│       ├── services/
+│       │   └── order.service.ts    # Lógica de negócio
+│       ├── models/
+│       │   └── Order.model.ts      # Schema Mongoose
+│       ├── validators/
+│       │   └── order.validator.ts  # Regras de validação
+│       ├── types/
+│       │   └── order.types.ts      # Interfaces TypeScript
+│       ├── __tests__/
+│       │   └── order.service.test.ts
+│       ├── order.routes.ts         # Rotas do módulo
+│       └── orders.module.ts        # Configuração do módulo
 │
-├── services/              # Lógica de negócio
-│   └── order.service.ts   # Serviço de pedidos
-│
-├── controllers/           # Controllers (camada HTTP)
-│   └── order.controller.ts
-│
-├── routes/                # Definição de rotas
-│   ├── index.ts           # Rotas principais
-│   └── order.routes.ts    # Rotas de pedidos
-│
-├── validators/            # Validações (express-validator)
-│   └── order.validator.ts
-│
-├── middlewares/           # Middlewares Express
-│   ├── errorHandler.ts    # Tratamento de erros
-│   └── validator.ts       # Middleware de validação
-│
-├── types/                 # TypeScript types/interfaces
-│   └── order.types.ts     # Tipos de pedidos
-│
-├── __tests__/             # Testes unitários
-│   └── order.service.test.ts
-│
-├── app.ts                 # Configuração do Express
-└── index.ts               # Entry point
+├── app.ts                           # Configuração do Express
+└── index.ts                         # Entry point da aplicação
+```
+
+## Arquitetura Modular
+
+### Princípios
+
+1. **Encapsulamento**: Cada módulo contém todos os arquivos relacionados a uma funcionalidade
+2. **Separação de Responsabilidades**: Cada camada tem uma responsabilidade clara
+3. **Reutilização**: Componentes comuns ficam em `common/`
+4. **Escalabilidade**: Fácil adicionar novos módulos sem afetar existentes
+5. **Testabilidade**: Módulos independentes são mais fáceis de testar
+
+### Anatomia de um Módulo
+
+Cada módulo é autocontido e segue a estrutura:
+
+```
+modules/
+└── <feature-name>/
+    ├── controllers/         # HTTP request handlers
+    ├── services/            # Business logic
+    ├── models/              # Database schemas
+    ├── validators/          # Input validation
+    ├── types/               # TypeScript interfaces
+    ├── __tests__/           # Unit tests
+    ├── <feature>.routes.ts  # Module routes
+    └── <feature>.module.ts  # Module configuration
+```
+
+### Arquivo de Módulo (.module.ts)
+
+O arquivo de módulo é responsável por:
+- Registrar as rotas do módulo
+- Configurar middlewares específicos
+- Exportar uma instância configurada
+
+```typescript
+export class OrdersModule {
+  public router: Router;
+
+  constructor() {
+    this.router = Router();
+    this.initializeRoutes();
+  }
+
+  private initializeRoutes(): void {
+    this.router.use('/orders', orderRoutes);
+  }
+}
+
+export default new OrdersModule();
 ```
 
 ## Camadas Detalhadas
 
-### 1. Routes (Rotas)
+### 1. Common (Compartilhado)
 
-**Responsabilidade:** Define os endpoints HTTP e associa com controllers
+**Responsabilidade:** Componentes reutilizáveis entre módulos
 
+#### Config
 ```typescript
-router.post('/', validate(createOrderValidation), orderController.createOrder);
+// common/config/env.ts - Variáveis de ambiente centralizadas
+export const config = {
+  port: process.env.PORT || 3000,
+  mongodbUri: process.env.MONGODB_URI,
+  // ...
+};
 ```
 
-- Define verbos HTTP (GET, POST, PUT, DELETE, PATCH)
-- Aplica middlewares (validação, autenticação)
-- Mapeia para controllers
+#### Middlewares
+```typescript
+// common/middlewares/errorHandler.ts - Tratamento global de erros
+export const errorHandler = (err, req, res, next) => {
+  // ...
+};
+```
 
-### 2. Validators (Validação)
+### 2. Modules (Módulos de Funcionalidade)
 
-**Responsabilidade:** Valida dados de entrada antes de processar
+Cada módulo segue a mesma estrutura interna:
+
+#### Module File (orders.module.ts)
+**Responsabilidade:** Configurar e exportar o módulo
+
+```typescript
+export class OrdersModule {
+  public router: Router;
+  
+  constructor() {
+    this.router = Router();
+    this.initializeRoutes();
+  }
+  
+  private initializeRoutes(): void {
+    this.router.use('/orders', orderRoutes);
+  }
+}
+```
+
+#### Routes (order.routes.ts)
+**Responsabilidade:** Definir endpoints e aplicar middlewares
+
+```typescript
+const router = Router();
+router.post('/', validate(createOrderValidation), orderController.createOrder);
+router.get('/', validate(listOrdersValidation), orderController.listOrders);
+```
+
+- Define verbos HTTP
+- Aplica validadores
+- Conecta a controllers
+
+#### Validators (order.validator.ts)
+
+#### Validators (order.validator.ts)
+**Responsabilidade:** Validar dados de entrada
 
 ```typescript
 body('totalValue')
   .isFloat({ min: 0.01 })
-  .withMessage('Valor total deve ser maior que zero')
+  .withMessage('Total value must be greater than zero')
 ```
 
 - Usa `express-validator`
 - Valida tipos, formatos, ranges
 - Retorna erros amigáveis
 
-### 3. Controllers (Controladores)
-
-**Responsabilidade:** Lida com requisições HTTP e respostas
+#### Controllers (order.controller.ts)
+**Responsabilidade:** Lidar com requisições HTTP
 
 ```typescript
 createOrder = asyncHandler(async (req: Request, res: Response) => {
@@ -116,15 +227,13 @@ createOrder = asyncHandler(async (req: Request, res: Response) => {
 - Chama services
 - Formata resposta HTTP
 
-### 4. Services (Lógica de Negócio)
-
-**Responsabilidade:** Implementa regras de negócio
+#### Services (order.service.ts)
+**Responsabilidade:** Implementar lógica de negócio
 
 ```typescript
 async createOrder(orderData: Partial<IOrderDocument>) {
-  // Validações de negócio
   if (!orderData.services || orderData.services.length === 0) {
-    throw new AppError('Pedido deve ter pelo menos um serviço', 400);
+    throw new AppError('Order must have at least one service', 400);
   }
   // ...
 }
@@ -135,9 +244,8 @@ async createOrder(orderData: Partial<IOrderDocument>) {
 - Transações
 - Coordena Models
 
-### 5. Models (Mongoose)
-
-**Responsabilidade:** Define esquema do banco de dados
+#### Models (Order.model.ts)
+**Responsabilidade:** Definir schema do banco
 
 ```typescript
 const orderSchema = new Schema<IOrderDocument>({
@@ -152,9 +260,8 @@ const orderSchema = new Schema<IOrderDocument>({
 - Hooks (pre/post save)
 - Índices
 
-### 6. Types (Tipos TypeScript)
-
-**Responsabilidade:** Define interfaces e tipos TypeScript
+#### Types (order.types.ts)
+**Responsabilidade:** Definir interfaces TypeScript
 
 ```typescript
 export interface IOrder {
@@ -178,37 +285,143 @@ Exemplo: Criar um pedido
    { patientName: "João", ... }
    │
    ▼
-2. Routes (order.routes.ts)
-   router.post('/', validate(...), controller.createOrder)
+2. Application (app.ts)
+   Express recebe requisição
    │
    ▼
-3. Validator (order.validator.ts)
-   Valida campos obrigatórios, tipos, formatos
+3. Common Router (common/index.ts)
+   Roteia para módulo apropriado
    │
    ▼
-4. Controller (order.controller.ts)
+4. Orders Module (orders.module.ts)
+   Direciona para rotas internas
+   │
+   ▼
+5. Routes (order.routes.ts)
+   Aplica validadores, chama controller
+   │
+   ▼
+6. Validator (order.validator.ts)
+   Valida campos obrigatórios, tipos
+   │
+   ▼
+7. Controller (order.controller.ts)
    Extrai req.body, chama service
    │
    ▼
-5. Service (order.service.ts)
+8. Service (order.service.ts)
    Aplica regras de negócio
    Valida que services.length > 0
-   Valida que totalValue > 0
    │
    ▼
-6. Model (Order.model.ts)
+9. Model (Order.model.ts)
    Cria documento Mongoose
    Aplica validações do schema
    │
    ▼
-7. MongoDB
-   Persiste dados
-   │
-   ▼
-8. Resposta
-   201 Created
-   { status: "success", data: { ... } }
+10. MongoDB
+    Persiste dados
+    │
+    ▼
+11. Resposta
+    201 Created
+    { status: "success", data: { ... } }
 ```
+
+## Vantagens da Arquitetura Modular
+
+### 1. Organização Clara
+- Todos os arquivos relacionados a uma funcionalidade ficam juntos
+- Fácil navegar e encontrar código
+- Estrutura previsível
+
+### 2. Escalabilidade
+- Adicionar novos módulos não afeta existentes
+- Cada módulo pode evoluir independentemente
+- Fácil dividir em microserviços no futuro
+
+### 3. Manutenibilidade
+- Mudanças ficam isoladas em um módulo
+- Menor chance de efeitos colaterais
+- Código mais testável
+
+### 4. Reutilização
+- Componentes comuns em `common/`
+- Evita duplicação de código
+- Padrões consistentes
+
+### 5. Colaboração em Equipe
+- Times podem trabalhar em módulos diferentes
+- Menor conflito de merge
+- Propriedade clara de código
+
+## Como Adicionar um Novo Módulo
+
+Exemplo: Criar módulo de Usuários
+
+```bash
+# 1. Criar estrutura
+mkdir -p src/modules/users/{controllers,services,models,validators,types,__tests__}
+
+# 2. Criar arquivos base
+touch src/modules/users/user.controller.ts
+touch src/modules/users/user.service.ts
+touch src/modules/users/User.model.ts
+touch src/modules/users/user.validator.ts
+touch src/modules/users/user.types.ts
+touch src/modules/users/user.routes.ts
+touch src/modules/users/users.module.ts
+
+# 3. Implementar module file
+# src/modules/users/users.module.ts
+export class UsersModule {
+  public router: Router;
+  
+  constructor() {
+    this.router = Router();
+    this.initializeRoutes();
+  }
+  
+  private initializeRoutes(): void {
+    this.router.use('/users', userRoutes);
+  }
+}
+
+# 4. Registrar no router principal
+# src/common/index.ts
+import usersModule from '../modules/users/users.module';
+router.use(usersModule.router);
+```
+
+## Comparação com Arquitetura em Camadas
+
+### Arquitetura em Camadas (Antes)
+```
+src/
+├── controllers/     # Todos os controllers
+├── services/        # Todos os services
+├── models/          # Todos os models
+└── routes/          # Todas as rotas
+```
+❌ Arquivos relacionados espalhados  
+❌ Difícil escalar  
+❌ Muitos arquivos na mesma pasta
+
+### Arquitetura Modular (Agora)
+```
+src/
+├── common/          # Compartilhado
+└── modules/
+    ├── orders/      # Tudo sobre pedidos
+    └── users/       # Tudo sobre usuários
+```
+✅ Arquivos relacionados juntos  
+✅ Fácil escalar  
+✅ Organização por domínio
+
+✅ Arquivos relacionados juntos  
+✅ Fácil escalar  
+✅ Organização por domínio
 
 ## Padrões Utilizados
 

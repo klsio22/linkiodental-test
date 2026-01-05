@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import orderService from '../services/order.service';
-import { asyncHandler } from '../middlewares/errorHandler';
+import { asyncHandler } from '../../../common/middlewares/errorHandler';
 import { OrderQueryParams } from '../types/order.types';
 
 export class OrderController {

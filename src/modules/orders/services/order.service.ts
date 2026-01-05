@@ -1,6 +1,6 @@
 import { Order, IOrderDocument } from '../models/Order.model';
 import { OrderQueryParams, PaginatedResponse } from '../types/order.types';
-import { AppError } from '../middlewares/errorHandler';
+import { AppError } from '../../../common/middlewares/errorHandler';
 
 export class OrderService {
   async createOrder(orderData: Partial<IOrderDocument>): Promise<IOrderDocument> {

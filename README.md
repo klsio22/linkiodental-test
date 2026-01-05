@@ -154,32 +154,45 @@ Para mais comandos, veja [DOCKER.md](DOCKER.md).
 
 ## 📁 Estrutura do Projeto
 
+**Arquitetura Modular** inspirada no NestJS:
+
 ```
 src/
-├── config/
-│   ├── env.ts                # Variáveis de ambiente
-│   └── database.ts           # Conexão MongoDB
-├── models/
-│   └── Order.model.ts        # Schema Mongoose
-├── services/
-│   └── order.service.ts      # Lógica de negócio
-├── controllers/
-│   └── order.controller.ts   # Controladores HTTP
-├── routes/
-│   ├── index.ts              # Rotas principais
-│   └── order.routes.ts       # Rotas de pedidos
-├── validators/
-│   └── order.validator.ts    # Validações
-├── middlewares/
-│   ├── errorHandler.ts       # Tratamento de erros
-│   └── validator.ts          # Middleware de validação
-├── types/
-│   └── order.types.ts        # Interfaces TypeScript
-├── __tests__/
-│   └── order.service.test.ts # Testes
-├── app.ts                    # Setup Express
-└── index.ts                  # Entry point
+├── common/                          # Código compartilhado
+│   ├── config/
+│   │   ├── env.ts                  # Variáveis de ambiente
+│   │   └── database.ts             # Conexão MongoDB
+│   ├── middlewares/
+│   │   ├── errorHandler.ts         # Tratamento de erros
+│   │   └── validator.ts            # Middleware de validação
+│   └── index.ts                     # Router principal
+│
+├── modules/                         # Módulos de funcionalidades
+│   └── orders/                      # Módulo de pedidos
+│       ├── controllers/
+│       │   └── order.controller.ts
+│       ├── services/
+│       │   └── order.service.ts    # Lógica de negócio
+│       ├── models/
+│       │   └── Order.model.ts      # Schema Mongoose
+│       ├── validators/
+│       │   └── order.validator.ts
+│       ├── types/
+│       │   └── order.types.ts
+│       ├── __tests__/
+│       │   └── order.service.test.ts
+│       ├── order.routes.ts         # Rotas do módulo
+│       └── orders.module.ts        # Configuração do módulo
+│
+├── app.ts                           # Setup Express
+└── index.ts                         # Entry point
 ```
+
+**Vantagens:**
+- ✅ Organização por domínio/funcionalidade
+- ✅ Fácil adicionar novos módulos
+- ✅ Melhor escalabilidade e manutenibilidade
+- ✅ Código compartilhado em `common/`
 
 ## 🔒 Variáveis de Ambiente
 

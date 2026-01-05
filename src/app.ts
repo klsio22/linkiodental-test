@@ -2,9 +2,9 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import { config } from './config/env';
-import routes from './routes';
-import { errorHandler } from './middlewares/errorHandler';
+import { config } from './common/config/env';
+import routes from './common';
+import { errorHandler } from './common/middlewares/errorHandler';
 
 export const createApp = (): Application => {
   const app = express();
