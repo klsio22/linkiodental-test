@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+  api:
+    build: .
+    container_name: lab-orders-api
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=${PORT:-3000}
+    depends_on:
+      - mongodb
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+    restart: unless-stopped
+    networks:
+      - lab-network
+
+  mongodb:
+    image: mongo:7.0
+    container_name: lab-orders-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - lab-network
+
+volumes:
+  mongo-data:
+    driver: local
+
+networks:
+  lab-network:
+    driver: bridge
