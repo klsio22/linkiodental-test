@@ -10,7 +10,6 @@ build/
 
 # Ambiente
 .env
-.env.local
 .env.*.local
 
 # IDE

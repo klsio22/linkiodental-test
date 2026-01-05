@@ -43,6 +43,11 @@ curl http://localhost:3000/api/health
 
 ```bash
 npm install
+
+# Certifique-se de que o MongoDB está rodando
+# Com Docker: docker compose up mongodb -d
+# Ou localmente: sudo systemctl start mongodb
+
 npm run dev          # Rodar em modo desenvolvimento
 npm run build        # Build para produção
 npm start            # Iniciar produção
@@ -51,7 +56,33 @@ npm run lint         # Verificar código
 npm run format       # Formatar código
 ```
 
-## 📚 API - Endpoints Principais
+**Nota:** O arquivo `.env` usa `localhost` por padrão. Para Docker, altere para `mongodb`.
+
+## 🧪 Testar a API
+
+### Com REST Client (VS Code)
+
+1. **Instale a extensão** [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client)
+2. **Abra** [api-test/orders.http](api-test/orders.http)
+3. **Clique em "Send Request"** acima de qualquer requisição
+
+O arquivo `orders.http` contém:
+- ✅ Health check
+- 📝 Criar pedidos (9+ cenários)
+- 📋 Listar com filtros e paginação (12+ variações)
+- 🔍 Buscar por ID
+- ✏️ Atualizar pedidos
+- ⏩ Avançar estados (CREATED → ANALYSIS → COMPLETED)
+- 🗑️ Deletar pedidos
+- 📊 Estatísticas
+- 🔄 Workflow completo de exemplo
+- 🎯 Edge cases e testes de validação
+
+**Atalhos:**
+- `Ctrl+Alt+R` (Win/Linux) ou `Cmd+Alt+R` (Mac) - Enviar requisição
+- `Ctrl+Alt+C` (Win/Linux) ou `Cmd+Alt+C` (Mac) - Cancelar requisição
+
+### Com cURL
 
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
@@ -196,22 +227,19 @@ src/
 
 ## 🔒 Variáveis de Ambiente
 
-Arquivo `.env` (já vem preconfigurado):
+Arquivo `.env`:
 
 ```env
 # MongoDB
-MONGO_INITDB_ROOT_USERNAME=admin
-MONGO_INITDB_ROOT_PASSWORD=supersecret123
-MONGO_INITDB_DATABASE=lab_orders_db
-MONGODB_URI=mongodb://admin:supersecret123@mongodb:27017/lab_orders_db?authSource=admin
-
-# API
-PORT=3000
-NODE_ENV=development
-JWT_SECRET=sua-chave-secreta-muito-longa-aqui
+MONGODB_URI=mongodb://admin:supersecret123@localhost:27017/lab_orders_db?authSource=admin
 ```
 
-⚠️ **Mude em produção!** Use `.env.example` como template.
+**Para Docker:** Altere `localhost` para `mongodb`
+```env
+MONGODB_URI=mongodb://admin:supersecret123@mongodb:27017/lab_orders_db?authSource=admin
+```
+
+⚠️ **Mude as credenciais em produção!**
 
 ## 🧪 Testes
 
@@ -221,6 +249,16 @@ npm run test:coverage   # Com coverage
 ```
 
 ## ❌ Troubleshooting
+
+### MongoDB não conecta localmente
+```bash
+# Erro: getaddrinfo ENOTFOUND mongodb
+# Solução: Altere no .env de 'mongodb' para 'localhost'
+MONGODB_URI=mongodb://admin:supersecret123@localhost:27017/lab_orders_db?authSource=admin
+
+# Ou inicie MongoDB com Docker
+docker compose up mongodb -d
+```
 
 ### Porta em uso
 ```bash
@@ -245,10 +283,11 @@ Para mais detalhes, veja [INSTALL.md](INSTALL.md).
 
 ## 📚 Documentação
 
+- **[api-test/orders.http](api-test/orders.http)** - Testes completos da API com REST Client
 - **[INSTALL.md](INSTALL.md)** - Instalação detalhada
 - **[EXAMPLES.md](EXAMPLES.md)** - Exemplos práticos da API
 - **[DOCKER.md](DOCKER.md)** - Comandos Docker avançados
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Arquitetura da aplicação
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Arquitetura modular do sistema
 
 ## 🎯 Próximos Passos
 
