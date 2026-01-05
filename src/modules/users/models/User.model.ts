@@ -30,7 +30,7 @@ const userSchema = new Schema<IUserDocument>(
     role: {
       type: String,
       enum: Object.values(UserRole),
-      default: UserRole.CUSTOMER,
+      default: UserRole.ATTENDANT,
     },
     isActive: {
       type: Boolean,

@@ -3,8 +3,15 @@
 @baseUrl = http://localhost:3000
 @apiUrl = {{baseUrl}}/api
 
+### AUTH TOKENS (Update these after login)
+@attendant_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NWM0NTI3ODdhOTBmYjZjZDRhMjEzYyIsInJvbGUiOiJBVFRFTkRBTlQiLCJpYXQiOjE3Njc2NTUzODYsImV4cCI6MTc2ODI2MDE4Nn0.U4Tv_gPVrBQHqAyQhzfGgdhm82FS1jpQ5RakQuANSCU
+@admin_token = your_admin_token_here
+
+### ORDER ID (Update this after creating an order)
+@order_id = your_order_id_here
+
 ###############################################################################
-### USERS - REGISTRATION (Staff vs Clients)
+### USERS - REGISTRATION (Staff only - ATTENDANT and ADMINS)
 ###############################################################################
 
 ### 1. Register ATTENDANT (Staff - Can Create Orders)
@@ -18,18 +25,7 @@ Content-Type: application/json
   "role": "ATTENDANT"
 }
 
-### 2. Register CUSTOMER (Client/Patient - Cannot Create Orders)
-POST {{apiUrl}}/users/register HTTP/1.1
-Content-Type: application/json
-
-{
-  "email": "customer@example.com",
-  "password": "senha123",
-  "name": "João Silva (Paciente)",
-  "role": "CUSTOMER"
-}
-
-### 3. Register LAB_ADMIN
+### 2. Register LAB_ADMIN
 POST {{apiUrl}}/users/register HTTP/1.1
 Content-Type: application/json
 
@@ -38,6 +34,17 @@ Content-Type: application/json
   "password": "admin123",
   "name": "Admin Lab",
   "role": "LAB_ADMIN"
+}
+
+### 3. Register SUPER_ADMIN
+POST {{apiUrl}}/users/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "superadmin@lab.com",
+  "password": "super123",
+  "name": "Super Admin",
+  "role": "SUPER_ADMIN"
 }
 
 ###############################################################################
@@ -53,16 +60,7 @@ Content-Type: application/json
   "password": "senha123"
 }
 
-### 5. Login as CUSTOMER
-POST {{apiUrl}}/users/login HTTP/1.1
-Content-Type: application/json
-
-{
-  "email": "customer@example.com",
-  "password": "senha123"
-}
-
-### 6. Login as LAB_ADMIN
+### 5. Login as LAB_ADMIN
 POST {{apiUrl}}/users/login HTTP/1.1
 Content-Type: application/json
 
@@ -77,11 +75,11 @@ Content-Type: application/json
 
 ### 7. Get User Profile
 GET {{apiUrl}}/users/profile HTTP/1.1
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NWM0NTI3ODdhOTBmYjZjZDRhMjEzYyIsInJvbGUiOiJBVFRFTkRBTlQiLCJpYXQiOjE3Njc2NTQ4MzEsImV4cCI6MTc2ODI1OTYzMX0.xKd5qbOdRi0w9_lnlErIzfdKwiQGXH5FYpsEd-Afh_Y
+Authorization: Bearer {{attendant_token}}
 
 ### 8. Update User Profile
 PUT {{apiUrl}}/users/profile HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -94,12 +92,12 @@ Content-Type: application/json
 
 ### 9. Create Order - ATTENDANT Success
 POST {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {attendant_token}
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
   "lab": "Lab Sorriso",
-  "patient": "João Silva",
+  "patient": "João Silva Updated",
   "customer": "Dr. Maria Santos",
   "services": [
     {
@@ -115,9 +113,9 @@ Content-Type: application/json
   ]
 }
 
-### 10. Create Order - CUSTOMER Error (403 Forbidden)
+### 10. Create Order - ATTENDANT - Single Service
 POST {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {customer_token}
+Authorization: Bearer {{attendant_token}}   
 Content-Type: application/json
 
 {
@@ -134,7 +132,7 @@ Content-Type: application/json
 
 ### 11. Create Order - Multiple Services
 POST {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {attendant_token}
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -159,7 +157,7 @@ Content-Type: application/json
 
 ### 12. Create Order - Single Service
 POST {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {attendant_token}
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -176,7 +174,7 @@ Content-Type: application/json
 
 ### 13. Create Order - Invalid (Missing Services)
 POST {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {attendant_token}
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -188,7 +186,7 @@ Content-Type: application/json
 
 ### 14. Create Order - Invalid (Service Value <= 0)
 POST {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {attendant_token}
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -220,56 +218,56 @@ Content-Type: application/json
 }
 
 ###############################################################################
-### ORDERS - READ (All Authenticated Users Can View)
+### ORDERS - READ (All Authenticated Staff Can View)
 ###############################################################################
 
 ### 16. List Orders - Attendant (Their Orders)
 GET {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {attendant_token}
+Authorization: Bearer {{attendant_token}}
 
-### 17. List Orders - Customer (Their Orders)
+### 17. List Orders - Admin (All Orders)
 GET {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {customer_token}
+Authorization: Bearer {{admin_token}}
 
 ### 18. List Orders - Paginated
 GET {{apiUrl}}/orders?page=1&limit=10 HTTP/1.1
-Authorization: Bearer {attendant_token}
+Authorization: Bearer {{attendant_token}}
 
 ### 19. List Orders - Filter by State CREATED
 GET {{apiUrl}}/orders?state=CREATED HTTP/1.1
-Authorization: Bearer {attendant_token}
+Authorization: Bearer {{attendant_token}}
 
 ### 20. List Orders - Filter by State ANALYSIS
 GET {{apiUrl}}/orders?state=ANALYSIS HTTP/1.1
-Authorization: Bearer {attendant_token}
+Authorization: Bearer {{attendant_token}}
 
 ### 21. List Orders - Filter by Status ACTIVE
 GET {{apiUrl}}/orders?status=ACTIVE HTTP/1.1
-Authorization: Bearer {attendant_token}
+Authorization: Bearer {{attendant_token}}
 
 ### 22. List Orders - Filter by Patient Name
 GET {{apiUrl}}/orders?patientName=João HTTP/1.1
-Authorization: Bearer {attendant_token}
+Authorization: Bearer {{attendant_token}}
 
 ### 23. List Orders - Sort by CreatedAt Descending
 GET {{apiUrl}}/orders?sortBy=createdAt&sortOrder=desc HTTP/1.1
-Authorization: Bearer {attendant_token}
+Authorization: Bearer {{attendant_token}}
 
 ### 24. Get Order by ID
-GET {{apiUrl}}/orders/{order_id} HTTP/1.1
-Authorization: Bearer {attendant_token}
+GET {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 
 ### 25. Get User Statistics
 GET {{apiUrl}}/orders/stats HTTP/1.1
-Authorization: Bearer {attendant_token}
+Authorization: Bearer {{attendant_token}}
 
 ###############################################################################
 ### ORDERS - UPDATE (Only ATTENDANT/LAB_ADMIN Can Modify)
 ###############################################################################
 
 ### 26. Update Order - Change Customer (ATTENDANT)
-PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
-Authorization: Bearer {attendant_token}
+PUT {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -277,8 +275,8 @@ Content-Type: application/json
 }
 
 ### 27. Update Order - Update Services (ATTENDANT)
-PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
-Authorization: Bearer {attendant_token}
+PUT {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -292,17 +290,16 @@ Content-Type: application/json
 }
 
 ### 28. Update Order - Change Status (ATTENDANT)
-PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
-Authorization: Bearer {attendant_token}
+PUT {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
   "status": "DELETED"
 }
 
-### 29. Update Order - CUSTOMER Error (403)
-PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
-Authorization: Bearer {customer_token}
+### 29. Update Order - No Authentication (Error)
+PUT {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
 Content-Type: application/json
 
 {
@@ -314,24 +311,22 @@ Content-Type: application/json
 ###############################################################################
 
 ### 30. Advance Order State - ATTENDANT (CREATED -> ANALYSIS)
-PATCH {{apiUrl}}/orders/{order_id}/advance HTTP/1.1
-Authorization: Bearer {attendant_token}
+PATCH {{apiUrl}}/orders/{{{order_id}}}/advance HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 
-### 31. Advance Order State - CUSTOMER Error (403)
-PATCH {{apiUrl}}/orders/{order_id}/advance HTTP/1.1
-Authorization: Bearer {customer_token}
+### 31. Advance Order State - No Authentication (Error)
+PATCH {{apiUrl}}/orders/{{{order_id}}}/advance HTTP/1.1
 
 ###############################################################################
 ### ORDERS - DELETE (Only ATTENDANT/LAB_ADMIN)
 ###############################################################################
 
 ### 32. Delete Order - ATTENDANT
-DELETE {{apiUrl}}/orders/{order_id} HTTP/1.1
-Authorization: Bearer {attendant_token}
+DELETE {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 
-### 33. Delete Order - CUSTOMER Error (403)
-DELETE {{apiUrl}}/orders/{order_id} HTTP/1.1
-Authorization: Bearer {customer_token}
+### 33. Delete Order - No Authentication (Error)
+DELETE {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
 
 ###############################################################################
 ### HEALTH CHECK
@@ -369,7 +364,7 @@ Content-Type: application/json
 
 ### Step 3: Create Order (Use Token from Step 2)
 POST {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {token_from_step2}
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -386,53 +381,51 @@ Content-Type: application/json
 
 ### Step 4: List Orders (Use order_id from Step 3)
 GET {{apiUrl}}/orders?state=CREATED HTTP/1.1
-Authorization: Bearer {token_from_step2}
+Authorization: Bearer {{attendant_token}}
 
 ### Step 5: Advance Order State
-PATCH {{apiUrl}}/orders/{order_id_from_step3}/advance HTTP/1.1
-Authorization: Bearer {token_from_step2}
+PATCH {{apiUrl}}/orders/{{{order_id}}}/advance HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 
 ### Step 6: View Statistics
 GET {{apiUrl}}/orders/stats HTTP/1.1
-Authorization: Bearer {token_from_step2}
+Authorization: Bearer {{attendant_token}}
 
 ###############################################################################
 ### IMPORTANT NOTES FOR TESTING
 ###############################################################################
 
-# ROLES AND PERMISSIONS:
-# 1. CUSTOMER = Cliente/Paciente
-#    - Pode fazer login
-#    - Pode ver seus perfis
-#    - NÃO pode criar pedidos ❌
-#    - NÃO pode modificar pedidos ❌
-#    - Pode visualizar pedidos em read-only ✅
-
-# 2. ATTENDANT = Atendente/Funcionário (STAFF)
-#    - Pode fazer login
+# ROLES AND PERMISSIONS (Sistema apenas para Staff):
+# 1. ATTENDANT = Atendente/Funcionário (STAFF)
+#    - Pode fazer login ✅
 #    - Pode criar pedidos ✅
 #    - Pode modificar pedidos (PUT, DELETE) ✅
 #    - Pode avançar estados ✅
 #    - Pode ver estatísticas ✅
+#    - Vê apenas seus próprios pedidos
 
-# 3. LAB_ADMIN = Administrador do Laboratório
-#    - Acesso total igual a ATTENDANT
+# 2. LAB_ADMIN = Administrador do Laboratório
+#    - Acesso total igual a ATTENDANT ✅
 #    - Pode gerenciar todo o laboratório
 
-# 4. SUPER_ADMIN = Super Administrador
-#    - Acesso total do sistema
+# 3. SUPER_ADMIN = Super Administrador
+#    - Acesso total do sistema ✅
 
 # FIELDS NO PEDIDO:
 # - state: CREATED → ANALYSIS → COMPLETED
 # - status: ACTIVE | DELETED
 
+# VALIDAÇÕES:
+# - ❌ Não pode criar pedido sem serviços
+# - ❌ Não pode criar pedido duplicado (mesmo lab, patient, customer e services)
+# - ❌ Não pode avançar estado se já estiver COMPLETED
+# - ✅ Cada usuário vê apenas seus pedidos
+
 # COMO TESTAR:
-# 1. Registre um usuário ATTENDANT
+# 1. Registre um usuário ATTENDANT ou LAB_ADMIN
 # 2. Faça login para obter o token
-# 3. Substitua {attendant_token} pelo token real
-# 4. Use o endpoint de criar pedido
-# 5. Registre um CUSTOMER
-# 6. Tente criar pedido com token CUSTOMER - deve falhar com 403!
+# 3. Atualize @attendant_token ou @admin_token com o token real
+# 4. Use os endpoints normalmente
 
 
 ###############################################################################
@@ -441,7 +434,7 @@ Authorization: Bearer {token_from_step2}
 
 ### Create Order - Success
 POST {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -464,7 +457,7 @@ Content-Type: application/json
 
 ### Create Order - Multiple Services
 POST {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -489,7 +482,7 @@ Content-Type: application/json
 
 ### Create Order - Single Service
 POST {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -506,7 +499,7 @@ Content-Type: application/json
 
 ### Create Order - Invalid (Missing Services)
 POST {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -518,7 +511,7 @@ Content-Type: application/json
 
 ### Create Order - Invalid (Service Value <= 0)
 POST {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -535,7 +528,7 @@ Content-Type: application/json
 
 ### Create Order - Invalid (Missing Patient Name)
 POST {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -571,43 +564,43 @@ Content-Type: application/json
 
 ### List Orders - User's Orders (Paginated)
 GET {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 
 ### List Orders - Page 2, Limit 5
 GET {{apiUrl}}/orders?page=2&limit=5 HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 
 ### List Orders - Filter by State CREATED
 GET {{apiUrl}}/orders?state=CREATED HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 
 ### List Orders - Filter by State ANALYSIS
 GET {{apiUrl}}/orders?state=ANALYSIS HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 
 ### List Orders - Filter by Status ACTIVE
 GET {{apiUrl}}/orders?status=ACTIVE HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 
 ### List Orders - Filter by Patient Name
 GET {{apiUrl}}/orders?patientName=João HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 
 ### List Orders - Filter by Customer Name
 GET {{apiUrl}}/orders?dentistName=Maria HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 
 ### List Orders - Sort by CreatedAt Ascending
 GET {{apiUrl}}/orders?sortBy=createdAt&sortOrder=asc HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 
 ### List Orders - Sort by CreatedAt Descending
 GET {{apiUrl}}/orders?sortBy=createdAt&sortOrder=desc HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 
 ### List Orders - Complex Filter
 GET {{apiUrl}}/orders?state=ANALYSIS&status=ACTIVE&page=1&limit=10&sortBy=createdAt&sortOrder=desc HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 
 ### List Orders - No Authentication
 GET {{apiUrl}}/orders HTTP/1.1
@@ -617,27 +610,27 @@ GET {{apiUrl}}/orders HTTP/1.1
 ###############################################################################
 
 ### Get Order by ID
-GET {{apiUrl}}/orders/{order_id} HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+GET {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 
 ### Get Order by ID - Invalid Format
 GET {{apiUrl}}/orders/invalid-id HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 
 ### Get Order by ID - Non-existent
 GET {{apiUrl}}/orders/507f1f77bcf86cd799439999 HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 
 ### Get Order by ID - No Authentication
-GET {{apiUrl}}/orders/{order_id} HTTP/1.1
+GET {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
 
 ###############################################################################
 ### ORDERS - UPDATE
 ###############################################################################
 
 ### Update Order - Change Customer
-PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+PUT {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -645,8 +638,8 @@ Content-Type: application/json
 }
 
 ### Update Order - Update Services
-PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+PUT {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -660,8 +653,8 @@ Content-Type: application/json
 }
 
 ### Update Order - Change Status
-PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+PUT {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -669,8 +662,8 @@ Content-Type: application/json
 }
 
 ### Update Order - Invalid (Cannot change state)
-PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+PUT {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -678,8 +671,8 @@ Content-Type: application/json
 }
 
 ### Update Order - No Services
-PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+PUT {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -687,7 +680,7 @@ Content-Type: application/json
 }
 
 ### Update Order - No Authentication
-PUT {{apiUrl}}/orders/{order_id} HTTP/1.1
+PUT {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
 Content-Type: application/json
 
 {
@@ -699,30 +692,30 @@ Content-Type: application/json
 ###############################################################################
 
 ### Advance Order State (CREATED -> ANALYSIS)
-PATCH {{apiUrl}}/orders/{order_id}/advance HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+PATCH {{apiUrl}}/orders/{{{order_id}}}/advance HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 
 ### Advance Order State - Already at Final State
-PATCH {{apiUrl}}/orders/{order_id}/advance HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+PATCH {{apiUrl}}/orders/{{{order_id}}}/advance HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 
 ### Advance Order State - No Authentication
-PATCH {{apiUrl}}/orders/{order_id}/advance HTTP/1.1
+PATCH {{apiUrl}}/orders/{{{order_id}}}/advance HTTP/1.1
 
 ###############################################################################
 ### ORDERS - DELETE
 ###############################################################################
 
 ### Delete Order
-DELETE {{apiUrl}}/orders/{order_id} HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+DELETE {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 
 ### Delete Order - Already Deleted
-DELETE {{apiUrl}}/orders/{order_id} HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+DELETE {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 
 ### Delete Order - No Authentication
-DELETE {{apiUrl}}/orders/{order_id} HTTP/1.1
+DELETE {{apiUrl}}/orders/{{{order_id}}} HTTP/1.1
 
 ###############################################################################
 ### ORDERS - STATISTICS
@@ -730,7 +723,7 @@ DELETE {{apiUrl}}/orders/{order_id} HTTP/1.1
 
 ### Get User Order Statistics
 GET {{apiUrl}}/orders/stats HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 
 ### Get Stats - No Authentication
 GET {{apiUrl}}/orders/stats HTTP/1.1
@@ -761,7 +754,7 @@ Content-Type: application/json
 
 ### Example Workflow - Step 2: Create Order
 POST {{apiUrl}}/orders HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 Content-Type: application/json
 
 {
@@ -778,15 +771,15 @@ Content-Type: application/json
 
 ### Example Workflow - Step 3: List Orders
 GET {{apiUrl}}/orders?state=CREATED HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 
 ### Example Workflow - Step 4: Advance State
-PATCH {{apiUrl}}/orders/{order_id}/advance HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+PATCH {{apiUrl}}/orders/{{{order_id}}}/advance HTTP/1.1
+Authorization: Bearer {{attendant_token}}
 
 ### Example Workflow - Step 5: Get Statistics
 GET {{apiUrl}}/orders/stats HTTP/1.1
-Authorization: Bearer {token_from_login_response}
+Authorization: Bearer {{attendant_token}}
 
 ###############################################################################
 ### NOTES FOR TESTING
@@ -794,7 +787,7 @@ Authorization: Bearer {token_from_login_response}
 
 # 1. First, register a user or login to get a token
 # 2. Replace {token_from_login_response} with the actual JWT token from login
-# 3. Replace {order_id} with an actual order ID from a create/list response
+# 3. Replace {{order_id}} with an actual order ID from a create/list response
 # 4. All order operations require authentication (Bearer token in Authorization header)
 # 5. User registration is public (no authentication required)
 # 6. Each user can only see/modify their own orders

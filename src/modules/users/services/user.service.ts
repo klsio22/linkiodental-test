@@ -21,7 +21,7 @@ export class UserService {
       email: data.email,
       password: data.password,
       name: data.name,
-      role: data.role || UserRole.CUSTOMER,
+      role: data.role || UserRole.ATTENDANT,
     });
 
     const savedUser = await user.save();

@@ -8,9 +8,8 @@ export interface AuthRequest extends Request {
 }
 
 /**
- * Middleware que verifica se o usuário é ATTENDANT (funcionário)
- * Apenas ATTENDANT, LAB_ADMIN e SUPER_ADMIN podem criar pedidos
- * CUSTOMER (cliente/paciente) não pode criar pedidos
+ * Middleware que verifica se o usuário tem permissão para operações
+ * ATTENDANT, LAB_ADMIN e SUPER_ADMIN têm acesso total ao sistema
  */
 export const requireAttendant = (req: AuthRequest, _res: Response, next: NextFunction) => {
   const userRole = (req as any).user?.role;
@@ -23,7 +22,7 @@ export const requireAttendant = (req: AuthRequest, _res: Response, next: NextFun
 
   if (!allowedRoles.includes(userRole)) {
     return next(
-      new AppError('Only staff members (ATTENDANT) can create orders. Clients cannot create orders.', 403)
+      new AppError('Access denied. Only authorized staff can perform this operation.', 403)
     );
   }
 
