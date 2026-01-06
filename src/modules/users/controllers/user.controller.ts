@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import userService from '../services/user.service';
 import { asyncHandler } from '../../../common/middlewares/errorHandler';
 import { RegisterData, AuthCredentials } from '../types/user.types';
+import { AuthRequest } from '../../../common/middlewares/auth';
 
 export class UserController {
   register = asyncHandler(async (req: Request, res: Response) => {
@@ -22,8 +23,8 @@ export class UserController {
     });
   });
 
-  getProfile = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id;
+  getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id as string ;
     const user = await userService.getUserById(userId);
     res.status(200).json({
       status: 'success',
@@ -31,8 +32,8 @@ export class UserController {
     });
   });
 
-  updateProfile = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id;
+  updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id as string;
     const user = await userService.updateUser(userId, req.body);
     res.status(200).json({
       status: 'success',

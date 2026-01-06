@@ -1,11 +1,12 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import orderService from '../services/order.service';
 import { asyncHandler } from '../../../common/middlewares/errorHandler';
 import { OrderQueryParams } from '../types/order.types';
+import { AuthRequest } from '../../../common/middlewares/auth';
 
 export class OrderController {
-  createOrder = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id;
+  createOrder = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id as string;
     const order = await orderService.createOrder(userId, req.body);
     res.status(201).json({
       status: 'success',
@@ -13,8 +14,8 @@ export class OrderController {
     });
   });
 
-  listOrders = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id;
+  listOrders = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id as string;
     const queryParams: OrderQueryParams = {
       page: Number.parseInt(req.query.page as string) || 1,
       limit: Number.parseInt(req.query.limit as string) || 20,
@@ -33,8 +34,8 @@ export class OrderController {
     });
   });
 
-  getOrderById = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id;
+  getOrderById = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id as string;
     const order = await orderService.getOrderById(userId, req.params.id);
     res.status(200).json({
       status: 'success',
@@ -42,8 +43,8 @@ export class OrderController {
     });
   });
 
-  getOrderStatus = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id;
+  getOrderStatus = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id as string;
     const order = await orderService.getOrderById(userId, req.params.id);
     res.status(200).json({
       status: 'success',
@@ -51,8 +52,8 @@ export class OrderController {
     });
   });
 
-  updateOrder = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id;
+  updateOrder = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id as string;
     const order = await orderService.updateOrder(userId, req.params.id, req.body);
     res.status(200).json({
       status: 'success',
@@ -60,14 +61,14 @@ export class OrderController {
     });
   });
 
-  deleteOrder = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id;
+  deleteOrder = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id as string;
     await orderService.deleteOrder(userId, req.params.id);
     res.status(204).send();
   });
 
-  advanceOrderState = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id;
+  advanceOrderState = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id as string;
     const order = await orderService.advanceOrderState(userId, req.params.id);
     res.status(200).json({
       status: 'success',
@@ -75,8 +76,8 @@ export class OrderController {
     });
   });
 
-  getOrderStats = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id;
+  getOrderStats = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id as string;
     const stats = await orderService.getOrderStats(userId);
     res.status(200).json({
       status: 'success',
@@ -84,8 +85,8 @@ export class OrderController {
     });
   });
 
-  updateOrderAddService = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id;
+  updateOrderAddService = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id as string;
     const order = await orderService.addServiceToOrder(userId, req.params.id, req.body);
     res.status(200).json({
       status: 'success',
@@ -93,8 +94,8 @@ export class OrderController {
     });
   });
 
-  addCommentToOrder = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id;
+  addCommentToOrder = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id as string;
     const order = await orderService.addCommentToOrder(userId, req.params.id, req.body);
     res.status(200).json({
       status: 'success',
