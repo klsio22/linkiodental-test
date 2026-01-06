@@ -124,8 +124,8 @@ orderSchema.methods.advanceState = async function (): Promise<IOrderDocument> {
 };
 
 orderSchema.pre('save', function (next) {
-  const doc = this as any;
-  if (doc.services && doc.services.length === 0) {
+  const doc = this as IOrderDocument;
+  if (doc.services?.length === 0) {
     next(new Error('Order must have at least one service'));
   } else {
     next();
