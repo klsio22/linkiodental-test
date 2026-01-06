@@ -2,7 +2,9 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import swaggerUi from 'swagger-ui-express';
 import { config } from './common/config/env';
+import { openApiSpec } from './common/openapi';
 import routes from './common';
 import { errorHandler } from './common/middlewares/errorHandler';
 
@@ -19,6 +21,9 @@ export const createApp = (): Application => {
     app.use(morgan('dev'));
   }
 
+  // Swagger API Documentation
+  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec, { swaggerOptions: { url: '/api/openapi.json' } }));
+
   app.use('/api', routes);
 
   app.get('/', (_req, res) => {
@@ -29,6 +34,7 @@ export const createApp = (): Application => {
         health: '/api/health',
         orders: '/api/orders',
         stats: '/api/orders/stats',
+        docs: '/api/docs',
       },
     });
   });
