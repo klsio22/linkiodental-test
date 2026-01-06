@@ -76,7 +76,3 @@ export class OrderRepository implements IOrderRepository {
     return !!result;
   }
 }
-
-export default function createOrderRepository(userId: string) {
-  return new OrderRepository(userId);
-}
