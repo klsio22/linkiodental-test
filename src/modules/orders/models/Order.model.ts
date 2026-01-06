@@ -23,7 +23,6 @@ const serviceSchema = new Schema<Service>(
       default: ServiceStatus.PENDING,
     },
   },
-  { _id: false }
 );
 
 const orderSchema = new Schema<IOrderDocument>(

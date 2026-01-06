@@ -83,6 +83,15 @@ export class OrderController {
       data: stats,
     });
   });
+
+  updateOrderAddService = asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.id;
+    const order = await orderService.addServiceToOrder(userId, req.params.id, req.body);
+    res.status(200).json({
+      status: 'success',
+      data: order,
+    });
+  });
 }
 
 export default new OrderController();

@@ -27,5 +27,7 @@ router.get('/:id', orderController.getOrderById);
 router.put('/:id', requireAttendant, validate(updateOrderValidation), orderController.updateOrder);
 router.delete('/:id', requireAttendant, orderController.deleteOrder);
 router.patch('/:id/advance', requireAttendant, orderController.advanceOrderState);
+router.post('/:id/add-service', requireAttendant, orderController.updateOrderAddService);
+
 
 export default router;

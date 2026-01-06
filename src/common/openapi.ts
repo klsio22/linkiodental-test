@@ -116,7 +116,11 @@ export const openApiSpec = {
                   email: { type: 'string', format: 'email', example: 'attendant@lab.com' },
                   password: { type: 'string', minLength: 6, example: 'senha123' },
                   name: { type: 'string', minLength: 3, example: 'Maria Atendente' },
-                  role: { type: 'string', enum: ['ATTENDANT', 'LAB_ADMIN', 'SUPER_ADMIN'], example: 'ATTENDANT' },
+                  role: {
+                    type: 'string',
+                    enum: ['ATTENDANT', 'LAB_ADMIN', 'SUPER_ADMIN'],
+                    example: 'ATTENDANT',
+                  },
                 },
                 required: ['email', 'password', 'name'],
               },
@@ -289,7 +293,11 @@ export const openApiSpec = {
         parameters: [
           { name: 'page', in: 'query', schema: { type: 'number', default: 1 } },
           { name: 'limit', in: 'query', schema: { type: 'number', default: 20 } },
-          { name: 'state', in: 'query', schema: { type: 'string', enum: ['CREATED', 'ANALYSIS', 'COMPLETED'] } },
+          {
+            name: 'state',
+            in: 'query',
+            schema: { type: 'string', enum: ['CREATED', 'ANALYSIS', 'COMPLETED'] },
+          },
           { name: 'status', in: 'query', schema: { type: 'string', enum: ['ACTIVE', 'DELETED'] } },
           { name: 'patientName', in: 'query', schema: { type: 'string' } },
           { name: 'dentistName', in: 'query', schema: { type: 'string' } },
@@ -426,6 +434,44 @@ export const openApiSpec = {
               },
             },
           },
+          404: { description: 'Pedido não encontrado' },
+        },
+      },
+    },
+
+    '/orders/{id}/add-service': {
+      post: {
+        tags: ['Orders'],
+        summary: 'Adicionar serviço ao pedido',
+        description: 'Adiciona um novo serviço ao pedido existente',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', example: 'Coroa de porcelana' },
+                  value: { type: 'number', minimum: 0.01, example: 250 },
+                  status: { type: 'string', enum: ['PENDING', 'DONE'], example: 'PENDING' },
+                },
+                required: ['name', 'value'],
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: 'Serviço adicionado com sucesso' },
+          400: { description: 'Dados inválidos' },
           404: { description: 'Pedido não encontrado' },
         },
       },

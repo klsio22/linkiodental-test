@@ -16,7 +16,10 @@ export class OrderService {
     return await order.save();
   }
 
-  async listOrders(userId: string, params: OrderQueryParams): Promise<PaginatedResponse<IOrderDocument>> {
+  async listOrders(
+    userId: string,
+    params: OrderQueryParams
+  ): Promise<PaginatedResponse<IOrderDocument>> {
     const {
       page = 1,
       limit = 20,
@@ -65,7 +68,11 @@ export class OrderService {
     return order;
   }
 
-  async updateOrder(userId: string, id: string, updateData: Partial<IOrderDocument>): Promise<IOrderDocument> {
+  async updateOrder(
+    userId: string,
+    id: string,
+    updateData: Partial<IOrderDocument>
+  ): Promise<IOrderDocument> {
     if (updateData.state) {
       throw new AppError('Use PATCH /advance to change order state', 400);
     }
@@ -117,6 +124,17 @@ export class OrderService {
     ]);
 
     return stats;
+  }
+
+  async addServiceToOrder(
+    userId: string,
+    orderId: string,
+    serviceData: { name: string; description?: string; price: number; status?: string }
+  ): Promise<IOrderDocument> {
+    const order = await this.getOrderById(userId, orderId);
+
+    order.services.push(serviceData as any);
+    return await order.save();
   }
 }
 
