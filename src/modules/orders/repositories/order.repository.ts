@@ -3,25 +3,29 @@ import { OrderQueryParams, PaginatedResponse } from '../types/order.types';
 
 export interface IOrderRepository {
   create(orderData: Partial<IOrderDocument>): Promise<IOrderDocument>;
-  findById(userId: string, orderId: string): Promise<IOrderDocument | null>;
-  find(userId: string, params: OrderQueryParams): Promise<PaginatedResponse<IOrderDocument>>;
-  update(userId: string, orderId: string, updateData: Partial<IOrderDocument>): Promise<IOrderDocument | null>;
-  delete(userId: string, orderId: string): Promise<boolean>;
+  findById(orderId: string): Promise<IOrderDocument | null>;
+  find(params: OrderQueryParams): Promise<PaginatedResponse<IOrderDocument>>;
+  update(orderId: string, updateData: Partial<IOrderDocument>): Promise<IOrderDocument | null>;
+  delete(orderId: string): Promise<boolean>;
 }
 
 export class OrderRepository implements IOrderRepository {
-  constructor(private readonly orderModel = Order) {}
+  private readonly userId: string;
+
+  constructor(userId: string, private readonly orderModel = Order) {
+    this.userId = userId;
+  }
 
   async create(orderData: Partial<IOrderDocument>): Promise<IOrderDocument> {
     const order = new this.orderModel(orderData);
     return await order.save();
   }
 
-  async findById(userId: string, orderId: string): Promise<IOrderDocument | null> {
-    return await this.orderModel.findOne({ _id: orderId, userId });
+  async findById(orderId: string): Promise<IOrderDocument | null> {
+    return await this.orderModel.findOne({ _id: orderId, userId: this.userId });
   }
 
-  async find(userId: string, params: OrderQueryParams): Promise<PaginatedResponse<IOrderDocument>> {
+  async find(params: OrderQueryParams): Promise<PaginatedResponse<IOrderDocument>> {
     const {
       page = 1,
       limit = 20,
@@ -33,7 +37,7 @@ export class OrderRepository implements IOrderRepository {
       sortOrder = 'desc',
     } = params;
 
-    const filter: Record<string, unknown> = { userId };
+    const filter: Record<string, unknown> = { userId: this.userId };
     if (state) filter.state = state;
     if (status) filter.status = status;
     if (patientName) filter.patient = new RegExp(patientName, 'i');
@@ -60,17 +64,19 @@ export class OrderRepository implements IOrderRepository {
     };
   }
 
-  async update(userId: string, orderId: string, updateData: Partial<IOrderDocument>): Promise<IOrderDocument | null> {
-    return await this.orderModel.findOneAndUpdate({ _id: orderId, userId }, updateData, {
+  async update(orderId: string, updateData: Partial<IOrderDocument>): Promise<IOrderDocument | null> {
+    return await this.orderModel.findOneAndUpdate({ _id: orderId, userId: this.userId }, updateData, {
       new: true,
       runValidators: true,
     });
   }
 
-  async delete(userId: string, orderId: string): Promise<boolean> {
-    const result = await this.orderModel.findOneAndDelete({ _id: orderId, userId });
+  async delete(orderId: string): Promise<boolean> {
+    const result = await this.orderModel.findOneAndDelete({ _id: orderId, userId: this.userId });
     return !!result;
   }
 }
 
-export default new OrderRepository();
+export default function createOrderRepository(userId: string) {
+  return new OrderRepository(userId);
+}

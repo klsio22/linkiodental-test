@@ -4,39 +4,33 @@ import { AppError } from '../../../common/middlewares/errorHandler';
 import { IOrderRepository, OrderRepository } from '../repositories/order.repository';
 
 export class OrderService {
-  constructor(private readonly orderRepository: IOrderRepository = new OrderRepository()) {}
+  private readonly orderRepository: IOrderRepository;
 
-  async createOrder(userId: string, orderData: Partial<IOrderDocument>): Promise<IOrderDocument> {
+  constructor(userId: string) {
+    this.orderRepository = new OrderRepository(userId);
+  }
+
+  async createOrder(orderData: Partial<IOrderDocument>): Promise<IOrderDocument> {
     if (!orderData.services || orderData.services.length === 0) {
       throw new AppError('Order must have at least one service', 400);
     }
 
-    return await this.orderRepository.create({
-      ...orderData,
-      userId,
-    });
+    return await this.orderRepository.create(orderData);
   }
 
-  async listOrders(
-    userId: string,
-    params: OrderQueryParams
-  ): Promise<PaginatedResponse<IOrderDocument>> {
-    return await this.orderRepository.find(userId, params);
+  async listOrders(params: OrderQueryParams): Promise<PaginatedResponse<IOrderDocument>> {
+    return await this.orderRepository.find(params);
   }
 
-  async getOrderById(userId: string, id: string): Promise<IOrderDocument> {
-    const order = await this.orderRepository.findById(userId, id);
+  async getOrderById(id: string): Promise<IOrderDocument> {
+    const order = await this.orderRepository.findById(id);
     if (!order) {
       throw new AppError('Order not found', 404);
     }
     return order;
   }
 
-  async updateOrder(
-    userId: string,
-    id: string,
-    updateData: Partial<IOrderDocument>
-  ): Promise<IOrderDocument> {
+  async updateOrder(id: string, updateData: Partial<IOrderDocument>): Promise<IOrderDocument> {
     if (updateData.state) {
       throw new AppError('Use PATCH /advance to change order state', 400);
     }
@@ -45,7 +39,7 @@ export class OrderService {
       throw new AppError('Order must have at least one service', 400);
     }
 
-    const order = await this.orderRepository.update(userId, id, updateData);
+    const order = await this.orderRepository.update(id, updateData);
 
     if (!order) {
       throw new AppError('Order not found', 404);
@@ -54,15 +48,15 @@ export class OrderService {
     return order;
   }
 
-  async deleteOrder(userId: string, id: string): Promise<void> {
-    const deleted = await this.orderRepository.delete(userId, id);
+  async deleteOrder(id: string): Promise<void> {
+    const deleted = await this.orderRepository.delete(id);
     if (!deleted) {
       throw new AppError('Order not found', 404);
     }
   }
 
-  async advanceOrderState(userId: string, id: string): Promise<IOrderDocument> {
-    const order = await this.getOrderById(userId, id);
+  async advanceOrderState(id: string): Promise<IOrderDocument> {
+    const order = await this.getOrderById(id);
 
     if (!order.canAdvanceState()) {
       throw new AppError('Order is already in final state', 400);
@@ -71,12 +65,8 @@ export class OrderService {
     return await order.advanceState();
   }
 
-  async addServiceToOrder(
-    userId: string,
-    orderId: string,
-    serviceData: Service
-  ): Promise<IOrderDocument> {
-    const order = await this.getOrderById(userId, orderId);
+  async addServiceToOrder(orderId: string, serviceData: Service): Promise<IOrderDocument> {
+    const order = await this.getOrderById(orderId);
 
     if (!order.services) {
       order.services = [];
@@ -90,12 +80,8 @@ export class OrderService {
     return await order.save();
   }
 
-  async addCommentToOrder(
-    userId: string,
-    orderId: string,
-    commentData: Comment
-  ): Promise<IOrderDocument> {
-    const order = await this.getOrderById(userId, orderId);
+  async addCommentToOrder(orderId: string, commentData: Comment): Promise<IOrderDocument> {
+    const order = await this.getOrderById(orderId);
 
     order.comments = order.comments || [];
     order.comments.push(commentData);
@@ -103,4 +89,4 @@ export class OrderService {
   }
 }
 
-export default new OrderService();
+export default OrderService;
