@@ -71,10 +71,10 @@ export class UserService {
   }
 
   async updateUser(userId: string, updateData: Partial<IUserDocument>): Promise<IUserDocument> {
-    const allowedFields = ['name'];
+    const allowedFields = ['name', 'email', 'isActive'];
     const filteredData: any = {};
     allowedFields.forEach((field) => {
-      if (updateData[field as keyof IUserDocument]) {
+      if (updateData[field as keyof IUserDocument] !== undefined) {
         filteredData[field] = updateData[field as keyof IUserDocument];
       }
     });

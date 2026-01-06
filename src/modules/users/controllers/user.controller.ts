@@ -39,6 +39,22 @@ export class UserController {
       data: user,
     });
   });
+
+  getUserById = asyncHandler(async (req: Request, res: Response) => {
+    const user = await userService.getUserById(req.params.id);
+    res.status(200).json({
+      status: 'success',
+      data: user,
+    });
+  });
+
+  updateUser = asyncHandler(async (req: Request, res: Response) => {
+    const user = await userService.updateUser(req.params.id, req.body);
+    res.status(200).json({
+      status: 'success',
+      data: user,
+    });
+  });
 }
 
 export default new UserController();

@@ -8,7 +8,7 @@
 @admin_token = your_admin_token_here
 
 ### ORDER ID (Update this after creating an order)
-@order_id = your_order_id_here
+@order_id = 695c56846be3029e1e1ad8c1
 
 ###############################################################################
 ### USERS - REGISTRATION (Staff only - ATTENDANT and ADMINS)

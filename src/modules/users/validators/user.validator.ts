@@ -26,3 +26,21 @@ export const loginValidation = [
     .notEmpty()
     .withMessage('Password is required'),
 ];
+
+export const updateUserValidation = [
+  body('name')
+    .optional()
+    .trim()
+    .isLength({ min: 3 })
+    .withMessage('Name must be at least 3 characters'),
+
+  body('email')
+    .optional()
+    .isEmail()
+    .withMessage('Please provide a valid email'),
+
+  body('isActive')
+    .optional()
+    .isBoolean()
+    .withMessage('isActive must be a boolean'),
+];
