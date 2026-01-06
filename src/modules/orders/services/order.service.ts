@@ -4,12 +4,14 @@ import { AppError } from '../../../common/middlewares/errorHandler';
 import mongoose from 'mongoose';
 
 export class OrderService {
+  constructor(private readonly orderModel = Order) {}
+
   async createOrder(userId: string, orderData: Partial<IOrderDocument>): Promise<IOrderDocument> {
     if (!orderData.services || orderData.services.length === 0) {
       throw new AppError('Order must have at least one service', 400);
     }
 
-    const order = new Order({
+    const order = new this.orderModel({
       ...orderData,
       userId,
     });
@@ -44,9 +46,10 @@ export class OrderService {
 
     const skip = (page - 1) * limit;
 
+
     const [orders, total] = await Promise.all([
-      Order.find(filter).sort(sort).skip(skip).limit(limit).exec(),
-      Order.countDocuments(filter),
+      this.orderModel.find(filter).sort(sort).skip(skip).limit(limit).exec(),
+      this.orderModel.countDocuments(filter),
     ]);
 
     return {
@@ -61,7 +64,7 @@ export class OrderService {
   }
 
   async getOrderById(userId: string, id: string): Promise<IOrderDocument> {
-    const order = await Order.findOne({ _id: id, userId });
+    const order = await this.orderModel.findOne({ _id: id, userId });
     if (!order) {
       throw new AppError('Order not found', 404);
     }
@@ -81,7 +84,7 @@ export class OrderService {
       throw new AppError('Order must have at least one service', 400);
     }
 
-    const order = await Order.findOneAndUpdate({ _id: id, userId }, updateData, {
+    const order = await this.orderModel.findOneAndUpdate({ _id: id, userId }, updateData, {
       new: true,
       runValidators: true,
     });
@@ -94,7 +97,7 @@ export class OrderService {
   }
 
   async deleteOrder(userId: string, id: string): Promise<void> {
-    const order = await Order.findOneAndDelete({ _id: id, userId });
+    const order = await this.orderModel.findOneAndDelete({ _id: id, userId });
     if (!order) {
       throw new AppError('Order not found', 404);
     }
@@ -111,7 +114,7 @@ export class OrderService {
   }
 
   async getOrderStats(userId: string) {
-    const stats = await Order.aggregate([
+    const stats = await this.orderModel.aggregate([
       {
         $match: { userId: new mongoose.Types.ObjectId(userId) },
       },

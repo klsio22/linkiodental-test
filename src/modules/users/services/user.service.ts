@@ -5,19 +5,21 @@ import jwt from 'jsonwebtoken';
 import { config } from '../../../common/config/env';
 
 export class UserService {
+  constructor(private readonly userModel = User) {}
+
   private generateToken(userId: string, role: string): string {
     return jwt.sign({ id: userId, role }, config.jwtSecret, {
       expiresIn: config.jwtExpiresIn,
-    } as any);
+    } as jwt.SignOptions);
   }
 
   async register(data: RegisterData): Promise<IUserAuthResponse> {
-    const existingUser = await User.findOne({ email: data.email });
+    const existingUser = await this.userModel.findOne({ email: data.email });
     if (existingUser) {
       throw new AppError('Email already registered', 400);
     }
 
-    const user = new User({
+    const user = new this.userModel({
       email: data.email,
       password: data.password,
       name: data.name,
@@ -37,7 +39,7 @@ export class UserService {
   }
 
   async login(credentials: AuthCredentials): Promise<IUserAuthResponse> {
-    const user = await User.findOne({ email: credentials.email }).select('+password');
+    const user = await this.userModel.findOne({ email: credentials.email }).select('+password');
     if (!user) {
       throw new AppError('Invalid email or password', 401);
     }
@@ -63,7 +65,7 @@ export class UserService {
   }
 
   async getUserById(userId: string): Promise<IUserDocument> {
-    const user = await User.findById(userId);
+    const user = await this.userModel.findById(userId);
     if (!user) {
       throw new AppError('User not found', 404);
     }
@@ -72,14 +74,14 @@ export class UserService {
 
   async updateUser(userId: string, updateData: Partial<IUserDocument>): Promise<IUserDocument> {
     const allowedFields = ['name', 'email', 'isActive'];
-    const filteredData: any = {};
+    const filteredData: Partial<IUserDocument> = {};
     allowedFields.forEach((field) => {
       if (updateData[field as keyof IUserDocument] !== undefined) {
-        filteredData[field] = updateData[field as keyof IUserDocument];
+        filteredData[field as keyof IUserDocument] = updateData[field as keyof IUserDocument];
       }
     });
 
-    const user = await User.findByIdAndUpdate(userId, filteredData, {
+    const user = await this.userModel.findByIdAndUpdate(userId, filteredData, {
       new: true,
       runValidators: true,
     });
