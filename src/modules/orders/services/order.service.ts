@@ -1,5 +1,5 @@
 import { Order, IOrderDocument } from '../models/Order.model';
-import { OrderQueryParams, PaginatedResponse } from '../types/order.types';
+import { Comment, OrderQueryParams, PaginatedResponse, Service } from '../types/order.types';
 import { AppError } from '../../../common/middlewares/errorHandler';
 import mongoose from 'mongoose';
 
@@ -129,23 +129,31 @@ export class OrderService {
   async addServiceToOrder(
     userId: string,
     orderId: string,
-    serviceData: { name: string; description?: string; price: number; status?: string }
+    serviceData: Service
   ): Promise<IOrderDocument> {
     const order = await this.getOrderById(userId, orderId);
 
-    order.services.push(serviceData as any);
+    if (!order.services) {
+      order.services = [];
+    }
+
+    if (serviceData.value <= 0 || order.state === "COMPLETED") {
+      throw new AppError('Service value must be greater than zero and order must not be completed', 400);
+    }
+  
+    order.services.push(serviceData);
     return await order.save();
   }
 
   async addCommentToOrder(
     userId: string,
     orderId: string,
-    commentData: { content: string }
+    commentData: Comment
   ): Promise<IOrderDocument> {
     const order = await this.getOrderById(userId, orderId);
 
     order.comments = order.comments || [];
-    order.comments.push(commentData as any);
+    order.comments.push(commentData);
     return await order.save();
   }
 }
