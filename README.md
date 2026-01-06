@@ -218,10 +218,10 @@ O arquivo `orders.http` contém:
 | POST | `/api/orders` | Criar novo pedido |
 | GET | `/api/orders` | Listar pedidos do usuário |
 | GET | `/api/orders/:id` | Buscar pedido por ID |
+| GET | `/api/orders/:id/status` | Obter status do pedido (ACTIVE \| DELETED) |
 | PUT | `/api/orders/:id` | Atualizar pedido |
 | DELETE | `/api/orders/:id` | Deletar pedido |
 | PATCH | `/api/orders/:id/advance` | Avançar estado |
-| GET | `/api/orders/stats` | Estatísticas do usuário |
 
 ## 💡 Exemplos de Uso
 
@@ -268,11 +268,20 @@ curl -X PATCH "http://localhost:3000/api/orders/{id}/advance" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-### Obter Estatísticas
+### Obter Status do Pedido
 
 ```bash
-curl -X GET http://localhost:3000/api/orders/stats \
+curl -X GET http://localhost:3000/api/orders/{id}/status \
   -H "Authorization: Bearer $TOKEN"
+
+# Resposta
+{
+  "status": "success",
+  "data": {
+    "status": "ACTIVE",
+    "state": "CREATED"
+  }
+}
 ```
 
 Para mais exemplos, veja [EXAMPLES.md](EXAMPLES.md).

@@ -18,7 +18,8 @@ router.use(authMiddleware);
 router.post('/', requireAttendant, validate(createOrderValidation), orderController.createOrder);
 
 // Read operations allowed for all authenticated users
-router.get('/stats', orderController.getOrderStats);
+// Status by order id (returns `status: ACTIVE | DELETED`)
+router.get('/:id/status', orderController.getOrderStatus);
 router.get('/', validate(listOrdersValidation), orderController.listOrders);
 router.get('/:id', orderController.getOrderById);
 

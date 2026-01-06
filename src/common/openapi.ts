@@ -398,13 +398,35 @@ export const openApiSpec = {
         },
       },
     },
-    '/orders/stats': {
+    '/orders/{id}/status': {
       get: {
         tags: ['Orders'],
-        summary: 'Obter estatísticas de pedidos',
+        summary: 'Obter status do pedido por ID',
         security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Order ID (ObjectId)',
+          },
+        ],
         responses: {
-          200: { description: 'Estatísticas dos pedidos do usuário' },
+          200: {
+            description: 'Status do pedido',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    status: { type: 'string', enum: ['ACTIVE', 'DELETED'] },
+                  },
+                },
+              },
+            },
+          },
+          404: { description: 'Pedido não encontrado' },
         },
       },
     },

@@ -42,6 +42,15 @@ export class OrderController {
     });
   });
 
+  getOrderStatus = asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.id;
+    const order = await orderService.getOrderById(userId, req.params.id);
+    res.status(200).json({
+      status: 'success',
+      data: { status: order.status, state: order.state },
+    });
+  });
+
   updateOrder = asyncHandler(async (req: Request, res: Response) => {
     const userId = (req as any).user?.id;
     const order = await orderService.updateOrder(userId, req.params.id, req.body);
