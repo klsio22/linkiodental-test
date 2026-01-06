@@ -20,6 +20,10 @@ export interface Service {
   status: ServiceStatus;
 }
 
+export interface Comment {
+  content: string;
+}
+
 export interface IOrder {
   userId: string;
   lab: string;
@@ -30,6 +34,7 @@ export interface IOrder {
   status: OrderStatus;
   createdAt: Date;
   updatedAt: Date;
+  comments?: Comment[];
 }
 
 export interface OrderQueryParams {

@@ -25,6 +25,16 @@ const serviceSchema = new Schema<Service>(
   },
 );
 
+const commentSchema = new Schema<{ content: string }>(
+  {
+    content: {
+      type: String,
+      required: [true, 'Comment content is required'],
+      minlength: [1, 'Comment content must have at least 1 character'],
+    },
+  },
+);
+
 const orderSchema = new Schema<IOrderDocument>(
   {
     userId: {
@@ -56,6 +66,10 @@ const orderSchema = new Schema<IOrderDocument>(
         },
         message: 'At least one service must be informed',
       },
+    },
+    comments: {
+      type: [commentSchema],
+      default: [],
     },
     state: {
       type: String,

@@ -136,6 +136,18 @@ export class OrderService {
     order.services.push(serviceData as any);
     return await order.save();
   }
+
+  async addCommentToOrder(
+    userId: string,
+    orderId: string,
+    commentData: { content: string }
+  ): Promise<IOrderDocument> {
+    const order = await this.getOrderById(userId, orderId);
+
+    order.comments = order.comments || [];
+    order.comments.push(commentData as any);
+    return await order.save();
+  }
 }
 
 export default new OrderService();

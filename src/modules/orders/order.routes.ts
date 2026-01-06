@@ -28,6 +28,7 @@ router.put('/:id', requireAttendant, validate(updateOrderValidation), orderContr
 router.delete('/:id', requireAttendant, orderController.deleteOrder);
 router.patch('/:id/advance', requireAttendant, orderController.advanceOrderState);
 router.post('/:id/add-service', requireAttendant, orderController.updateOrderAddService);
+router.post('/:id/add-comment', requireAttendant, orderController.addCommentToOrder);
 
 
 export default router;

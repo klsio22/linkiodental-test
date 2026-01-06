@@ -92,6 +92,15 @@ export class OrderController {
       data: order,
     });
   });
+
+  addCommentToOrder = asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.id;
+    const order = await orderService.addCommentToOrder(userId, req.params.id, req.body);
+    res.status(200).json({
+      status: 'success',
+      data: order,
+    });
+  });
 }
 
 export default new OrderController();

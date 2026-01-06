@@ -476,5 +476,41 @@ export const openApiSpec = {
         },
       },
     },
+
+    '/orders/{id}/add-comment': {
+      post: {
+        tags: ['Orders'],
+        summary: 'Adicionar comentário ao pedido',
+        description: 'Adiciona um comentário ao pedido existente',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  content: { type: 'string', minLength: 1, example: 'Paciente solicitou urgência no serviço.' },
+                },
+                required: ['content'],
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: 'Comentário adicionado com sucesso' },
+          400: { description: 'Dados inválidos' },
+          404: { description: 'Pedido não encontrado' },
+        },
+      },
+    },
   },
 };
