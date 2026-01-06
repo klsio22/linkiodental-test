@@ -1,15 +1,23 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { UserService } from '../services/user.service';
-import { User } from '../models/User.model';
+import { IUserRepository } from '../repositories/user.repository';
 import { UserRole } from '../types/user.types';
-
-vi.mock('../models/User.model');
 
 describe('UserService', () => {
   let userService: UserService;
+  let mockUserRepository: Partial<IUserRepository>;
 
   beforeEach(() => {
-    userService = new UserService();
+    mockUserRepository = {
+      findByEmail: vi.fn(),
+      findByEmailWithPassword: vi.fn(),
+      create: vi.fn(),
+      findById: vi.fn(),
+      update: vi.fn(),
+      findAll: vi.fn(),
+    };
+
+    userService = new UserService(mockUserRepository as IUserRepository);
     vi.clearAllMocks();
   });
 
@@ -20,16 +28,10 @@ describe('UserService', () => {
         email: 'attendant@lab.com',
         name: 'Maria Atendente',
         role: UserRole.ATTENDANT,
-        save: vi.fn().mockResolvedValue({
-          _id: '123',
-          email: 'attendant@lab.com',
-          name: 'Maria Atendente',
-          role: UserRole.ATTENDANT,
-        }),
       };
 
-      vi.mocked(User.findOne).mockResolvedValue(null);
-      vi.mocked(User).mockImplementation(() => mockUser as any);
+      vi.mocked(mockUserRepository.findByEmail!).mockResolvedValue(null);
+      vi.mocked(mockUserRepository.create!).mockResolvedValue(mockUser as any);
 
       const result = await userService.register({
         email: 'attendant@lab.com',
@@ -43,7 +45,7 @@ describe('UserService', () => {
     });
 
     it('deve lançar erro se email já existir', async () => {
-      vi.mocked(User.findOne).mockResolvedValue({ email: 'existing@lab.com' } as any);
+      vi.mocked(mockUserRepository.findByEmail!).mockResolvedValue({ email: 'existing@lab.com' } as any);
 
       await expect(
         userService.register({
@@ -60,16 +62,10 @@ describe('UserService', () => {
         email: 'admin@lab.com',
         name: 'Admin User',
         role: UserRole.LAB_ADMIN,
-        save: vi.fn().mockResolvedValue({
-          _id: '456',
-          email: 'admin@lab.com',
-          name: 'Admin User',
-          role: UserRole.LAB_ADMIN,
-        }),
       };
 
-      vi.mocked(User.findOne).mockResolvedValue(null);
-      vi.mocked(User).mockImplementation(() => mockUser as any);
+      vi.mocked(mockUserRepository.findByEmail!).mockResolvedValue(null);
+      vi.mocked(mockUserRepository.create!).mockResolvedValue(mockUser as any);
 
       const result = await userService.register({
         email: 'admin@lab.com',
@@ -93,9 +89,7 @@ describe('UserService', () => {
         comparePassword: vi.fn().mockResolvedValue(true),
       };
 
-      vi.mocked(User.findOne).mockReturnValue({
-        select: vi.fn().mockResolvedValue(mockUser),
-      } as any);
+      vi.mocked(mockUserRepository.findByEmailWithPassword!).mockResolvedValue(mockUser as any);
 
       const result = await userService.login({
         email: 'attendant@lab.com',
@@ -107,9 +101,7 @@ describe('UserService', () => {
     });
 
     it('deve lançar erro com email inválido', async () => {
-      vi.mocked(User.findOne).mockReturnValue({
-        select: vi.fn().mockResolvedValue(null),
-      } as any);
+      vi.mocked(mockUserRepository.findByEmailWithPassword!).mockResolvedValue(null);
 
       await expect(
         userService.login({
@@ -121,12 +113,11 @@ describe('UserService', () => {
 
     it('deve lançar erro com senha inválida', async () => {
       const mockUser = {
+        isActive: true,
         comparePassword: vi.fn().mockResolvedValue(false),
       };
 
-      vi.mocked(User.findOne).mockReturnValue({
-        select: vi.fn().mockResolvedValue(mockUser),
-      } as any);
+      vi.mocked(mockUserRepository.findByEmailWithPassword!).mockResolvedValue(mockUser as any);
 
       await expect(
         userService.login({
@@ -142,9 +133,7 @@ describe('UserService', () => {
         comparePassword: vi.fn().mockResolvedValue(true),
       };
 
-      vi.mocked(User.findOne).mockReturnValue({
-        select: vi.fn().mockResolvedValue(mockUser),
-      } as any);
+      vi.mocked(mockUserRepository.findByEmailWithPassword!).mockResolvedValue(mockUser as any);
 
       await expect(
         userService.login({
@@ -164,16 +153,16 @@ describe('UserService', () => {
         role: UserRole.ATTENDANT,
       };
 
-      vi.mocked(User.findById).mockResolvedValue(mockUser as any);
+      vi.mocked(mockUserRepository.findById!).mockResolvedValue(mockUser as any);
 
       const result = await userService.getUserById('123');
 
       expect(result).toEqual(mockUser);
-      expect(User.findById).toHaveBeenCalledWith('123');
+      expect(mockUserRepository.findById).toHaveBeenCalledWith('123');
     });
 
     it('deve lançar erro se usuário não existir', async () => {
-      vi.mocked(User.findById).mockResolvedValue(null);
+      vi.mocked(mockUserRepository.findById!).mockResolvedValue(null);
 
       await expect(userService.getUserById('999')).rejects.toThrow('User not found');
     });
@@ -186,22 +175,19 @@ describe('UserService', () => {
         name: 'Maria Updated',
       };
 
-      vi.mocked(User.findByIdAndUpdate).mockResolvedValue(mockUpdatedUser as any);
+      vi.mocked(mockUserRepository.update!).mockResolvedValue(mockUpdatedUser as any);
 
       const result = await userService.updateUser('123', { name: 'Maria Updated' } as any);
 
       expect(result).toEqual(mockUpdatedUser);
-      expect(User.findByIdAndUpdate).toHaveBeenCalledWith(
-        '123',
-        { name: 'Maria Updated' },
-        { new: true, runValidators: true }
-      );
+      expect(mockUserRepository.update).toHaveBeenCalledWith('123', { name: 'Maria Updated' });
     });
 
     it('deve lançar erro se usuário não existir', async () => {
-      vi.mocked(User.findByIdAndUpdate).mockResolvedValue(null);
+      vi.mocked(mockUserRepository.update!).mockResolvedValue(null);
 
       await expect(userService.updateUser('999', { name: 'Test' } as any)).rejects.toThrow('User not found');
     });
   });
 });
+

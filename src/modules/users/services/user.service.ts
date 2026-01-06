@@ -1,11 +1,12 @@
-import { User, IUserDocument } from '../models/User.model';
+import { IUserDocument } from '../models/User.model';
 import { AuthCredentials, RegisterData, IUserAuthResponse, UserRole } from '../types/user.types';
 import { AppError } from '../../../common/middlewares/errorHandler';
+import { IUserRepository, UserRepository } from '../repositories/user.repository';
 import jwt from 'jsonwebtoken';
 import { config } from '../../../common/config/env';
 
 export class UserService {
-  constructor(private readonly userModel = User) {}
+  constructor(private readonly userRepository: IUserRepository = new UserRepository()) {}
 
   private generateToken(userId: string, role: string): string {
     return jwt.sign({ id: userId, role }, config.jwtSecret, {
@@ -14,19 +15,18 @@ export class UserService {
   }
 
   async register(data: RegisterData): Promise<IUserAuthResponse> {
-    const existingUser = await this.userModel.findOne({ email: data.email });
+    const existingUser = await this.userRepository.findByEmail(data.email);
     if (existingUser) {
       throw new AppError('Email already registered', 400);
     }
 
-    const user = new this.userModel({
+    const savedUser = await this.userRepository.create({
       email: data.email,
       password: data.password,
       name: data.name,
       role: data.role || UserRole.ATTENDANT,
     });
 
-    const savedUser = await user.save();
     const token = this.generateToken(savedUser._id.toString(), savedUser.role);
 
     return {
@@ -39,7 +39,7 @@ export class UserService {
   }
 
   async login(credentials: AuthCredentials): Promise<IUserAuthResponse> {
-    const user = await this.userModel.findOne({ email: credentials.email }).select('+password');
+    const user = await this.userRepository.findByEmailWithPassword(credentials.email);
     if (!user) {
       throw new AppError('Invalid email or password', 401);
     }
@@ -65,7 +65,7 @@ export class UserService {
   }
 
   async getUserById(userId: string): Promise<IUserDocument> {
-    const user = await this.userModel.findById(userId);
+    const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new AppError('User not found', 404);
     }
@@ -81,10 +81,7 @@ export class UserService {
       }
     });
 
-    const user = await this.userModel.findByIdAndUpdate(userId, filteredData, {
-      new: true,
-      runValidators: true,
-    });
+    const user = await this.userRepository.update(userId, filteredData);
 
     if (!user) {
       throw new AppError('User not found', 404);

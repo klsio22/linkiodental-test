@@ -50,10 +50,5 @@ describe('OrderController', () => {
       expect(orderController.advanceOrderState).toBeDefined();
       expect(typeof orderController.advanceOrderState).toBe('function');
     });
-
-    it('deve ter método getOrderStats', () => {
-      expect(orderController.getOrderStats).toBeDefined();
-      expect(typeof orderController.getOrderStats).toBe('function');
-    });
   });
 });

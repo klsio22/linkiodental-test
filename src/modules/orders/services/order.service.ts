@@ -1,70 +1,31 @@
-import { Order, IOrderDocument } from '../models/Order.model';
+import { IOrderDocument } from '../models/Order.model';
 import { Comment, OrderQueryParams, PaginatedResponse, Service } from '../types/order.types';
 import { AppError } from '../../../common/middlewares/errorHandler';
-import mongoose from 'mongoose';
+import { IOrderRepository, OrderRepository } from '../repositories/order.repository';
 
 export class OrderService {
-  constructor(private readonly orderModel = Order) {}
+  constructor(private readonly orderRepository: IOrderRepository = new OrderRepository()) {}
 
   async createOrder(userId: string, orderData: Partial<IOrderDocument>): Promise<IOrderDocument> {
     if (!orderData.services || orderData.services.length === 0) {
       throw new AppError('Order must have at least one service', 400);
     }
 
-    const order = new this.orderModel({
+    return await this.orderRepository.create({
       ...orderData,
       userId,
     });
-    return await order.save();
   }
 
   async listOrders(
     userId: string,
     params: OrderQueryParams
   ): Promise<PaginatedResponse<IOrderDocument>> {
-    const {
-      page = 1,
-      limit = 20,
-      state,
-      status,
-      patientName,
-      dentistName,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
-    } = params;
-
-    // Build filters
-    const filter: Record<string, unknown> = { userId };
-    if (state) filter.state = state;
-    if (status) filter.status = status;
-    if (patientName) filter.patient = new RegExp(patientName, 'i');
-    if (dentistName) filter.customer = new RegExp(dentistName, 'i');
-
-    // Sort
-    const sort: Record<string, 1 | -1> = {};
-    sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
-
-    const skip = (page - 1) * limit;
-
-
-    const [orders, total] = await Promise.all([
-      this.orderModel.find(filter).sort(sort).skip(skip).limit(limit).exec(),
-      this.orderModel.countDocuments(filter),
-    ]);
-
-    return {
-      data: orders,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    return await this.orderRepository.find(userId, params);
   }
 
   async getOrderById(userId: string, id: string): Promise<IOrderDocument> {
-    const order = await this.orderModel.findOne({ _id: id, userId });
+    const order = await this.orderRepository.findById(userId, id);
     if (!order) {
       throw new AppError('Order not found', 404);
     }
@@ -84,10 +45,7 @@ export class OrderService {
       throw new AppError('Order must have at least one service', 400);
     }
 
-    const order = await this.orderModel.findOneAndUpdate({ _id: id, userId }, updateData, {
-      new: true,
-      runValidators: true,
-    });
+    const order = await this.orderRepository.update(userId, id, updateData);
 
     if (!order) {
       throw new AppError('Order not found', 404);
@@ -97,8 +55,8 @@ export class OrderService {
   }
 
   async deleteOrder(userId: string, id: string): Promise<void> {
-    const order = await this.orderModel.findOneAndDelete({ _id: id, userId });
-    if (!order) {
+    const deleted = await this.orderRepository.delete(userId, id);
+    if (!deleted) {
       throw new AppError('Order not found', 404);
     }
   }
@@ -113,22 +71,6 @@ export class OrderService {
     return await order.advanceState();
   }
 
-  async getOrderStats(userId: string) {
-    const stats = await this.orderModel.aggregate([
-      {
-        $match: { userId: new mongoose.Types.ObjectId(userId) },
-      },
-      {
-        $group: {
-          _id: '$state',
-          count: { $sum: 1 },
-        },
-      },
-    ]);
-
-    return stats;
-  }
-
   async addServiceToOrder(
     userId: string,
     orderId: string,
@@ -140,10 +82,10 @@ export class OrderService {
       order.services = [];
     }
 
-    if (serviceData.value <= 0 || order.state === "COMPLETED") {
+    if (serviceData.value <= 0 || order.state === 'COMPLETED') {
       throw new AppError('Service value must be greater than zero and order must not be completed', 400);
     }
-  
+
     order.services.push(serviceData);
     return await order.save();
   }

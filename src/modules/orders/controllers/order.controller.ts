@@ -76,15 +76,6 @@ export class OrderController {
     });
   });
 
-  getOrderStats = asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id as string;
-    const stats = await orderService.getOrderStats(userId);
-    res.status(200).json({
-      status: 'success',
-      data: stats,
-    });
-  });
-
   updateOrderAddService = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id as string;
     const order = await orderService.addServiceToOrder(userId, req.params.id, req.body);
