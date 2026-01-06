@@ -32,8 +32,6 @@ export const createApp = (): Application => {
       version: '1.0.0',
       endpoints: {
         health: '/api/health',
-        orders: '/api/orders',
-        stats: '/api/orders/stats',
         docs: '/api/docs',
       },
     });

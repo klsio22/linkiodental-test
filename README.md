@@ -26,10 +26,12 @@ Sistema de gerenciamento de pedidos de laboratório odontológico com Node.js, E
 cd linkiodental-test
 
 # Inicie os containers
-docker compose up --build
+docker compose up -d
 
-# Ou use o script interativo
-./scripts.sh
+ou 
+# Inicie os containers com os log
+
+docker compose up 
 ```
 
 A API estará disponível em: **http://localhost:3000**
@@ -391,9 +393,35 @@ MONGODB_URI=mongodb://admin:supersecret123@mongodb:27017/lab_orders_db?authSourc
 
 ## 🧪 Testes
 
+O projeto possui uma **suíte completa de testes unitários** cobrindo:
+
+- ✅ **Services** (24 testes) - Lógica de negócio
+- ✅ **Validators** (28 testes) - Validações de entrada
+- ✅ **Controllers** (16 testes) - Estrutura e métodos
+- ✅ **Models** (23 testes) - Schema, validações e instâncias
+
+**Total: 91 testes ✅ Todos passando**
+
 ```bash
 npm test                # Rodar testes
-npm run test:coverage   # Com coverage
+npm test -- --ui        # Modo interativo
+npm run test:coverage   # Com coverage (se configurado)
+```
+
+### Estrutura de Testes
+
+```
+src/modules/
+├── orders/__tests__/
+│   ├── order.service.test.ts     (13 testes ✅)
+│   ├── order.controller.test.ts  (9 testes ✅)
+│   ├── order.model.test.ts       (10 testes ✅)
+│   └── order.validator.test.ts   (13 testes ✅)
+└── users/__tests__/
+    ├── user.service.test.ts      (11 testes ✅)
+    ├── user.controller.test.ts   (7 testes ✅)
+    ├── user.model.test.ts        (13 testes ✅)
+    └── user.validator.test.ts    (15 testes ✅)
 ```
 
 ## ❌ Troubleshooting
@@ -439,14 +467,17 @@ Para mais detalhes, veja [INSTALL.md](INSTALL.md).
 
 ## 🎯 Próximos Passos
 
-- [ ] Autenticação JWT
+- [x] Autenticação JWT ✅
+- [x] Testes unitários completos (91 testes) ✅
+- [x] Documentação OpenAPI/Swagger ✅
 - [ ] Upload de arquivos
 - [ ] Notificações (email/SMS)
 - [ ] Cache com Redis
-- [ ] Documentação OpenAPI/Swagger
 - [ ] WebSockets para updates em tempo real
 - [ ] Filas com Bull
 - [ ] CI/CD com GitHub Actions
+- [ ] Testes de integração
+- [ ] Testes E2E
 
 ## 📝 Licença
 
